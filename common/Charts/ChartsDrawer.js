@@ -3673,8 +3673,7 @@ CChartsDrawer.prototype =
 
 
 	//******calculate graphic objects for 3d*******
-	calculateRect3D : function(points, val, isNotDrawDownVerge, isNotOnlyFrontFaces, points2)
-	{
+	calculateRect3D: function (points, val, isNotDrawDownVerge, isNotOnlyFrontFaces, points2) {
 		var res;
 		var point12, point22, point32, point42, point52, point62, point72, point82;
 
@@ -3687,7 +3686,7 @@ CChartsDrawer.prototype =
 		var point7 = points[6];
 		var point8 = points[7];
 
-		if(points2){
+		if (points2) {
 			point12 = points2[0];
 			point22 = points2[1];
 			point32 = points2[2];
@@ -3696,7 +3695,7 @@ CChartsDrawer.prototype =
 			point62 = points2[5];
 			point72 = points2[6];
 			point82 = points2[7];
-		}else if(points){
+		} else if (points) {
 			point12 = point1;
 			point22 = point2;
 			point32 = point3;
@@ -3710,17 +3709,13 @@ CChartsDrawer.prototype =
 		var frontPaths = [];
 		var darkPaths = [];
 
-		var addPathToArr = function(isFront, face, index)
-		{
+		var addPathToArr = function (isFront, face, index) {
 			frontPaths[index] = null;
 			darkPaths[index] = null;
 
-			if(isFront)
-			{
+			if (isFront) {
 				frontPaths[index] = face;
-			}
-			else
-			{
+			} else {
 				darkPaths[index] = face;
 			}
 		};
@@ -3731,50 +3726,38 @@ CChartsDrawer.prototype =
 		addPathToArr(this._isVisibleVerge3D(point52, point12, point42, val), face, 0);
 
 		//down
-		if(val === 0 && this.calcProp.type === c_oChartTypes.Bar)
-		{
+		if (val === 0 && this.calcProp.type === c_oChartTypes.Bar) {
 			face = this._calculatePathFace(point1, point2, point3, point4, true);
 			addPathToArr(true, face, 1);
-		}
-		else
-		{
+		} else {
 			face = this._calculatePathFace(point1, point2, point3, point4, true);
 			addPathToArr(this._isVisibleVerge3D(point42, point12, point22, val), face, 1);
 		}
 
 
 		//left
-		if(val === 0 && this.calcProp.type === c_oChartTypes.HBar)
-		{
+		if (val === 0 && this.calcProp.type === c_oChartTypes.HBar) {
 			face = this._calculatePathFace(point1, point5, point6, point2, true);
-			addPathToArr(!isNotDrawDownVerge , face, 2);
-		}
-		else
-		{
+			addPathToArr(!isNotDrawDownVerge, face, 2);
+		} else {
 			face = this._calculatePathFace(point1, point5, point6, point2, true);
 			addPathToArr((!isNotDrawDownVerge && this._isVisibleVerge3D(point22, point12, point52, val)), face, 2);
 		}
 
 		//right
-		if(val === 0 && this.calcProp.type === c_oChartTypes.HBar)
-		{
+		if (val === 0 && this.calcProp.type === c_oChartTypes.HBar) {
 			face = this._calculatePathFace(point4, point8, point7, point3, true);
 			addPathToArr(true, face, 3);
-		}
-		else
-		{
+		} else {
 			face = this._calculatePathFace(point4, point8, point7, point3, true);
 			addPathToArr(this._isVisibleVerge3D(point82, point42, point32, val), face, 3);
 		}
 
 		//up
-		if(val === 0 && this.calcProp.type === c_oChartTypes.Bar)
-		{
+		if (val === 0 && this.calcProp.type === c_oChartTypes.Bar) {
 			face = this._calculatePathFace(point5, point6, point7, point8, true);
 			addPathToArr(true, face, 4);
-		}
-		else
-		{
+		} else {
 			face = this._calculatePathFace(point5, point6, point7, point8, true);
 			addPathToArr(this._isVisibleVerge3D(point62, point52, point82, val), face, 4);
 		}
@@ -3783,12 +3766,9 @@ CChartsDrawer.prototype =
 		face = this._calculatePathFace(point2, point6, point7, point3, true);
 		addPathToArr(this._isVisibleVerge3D(point32, point22, point62, val), face, 5);
 
-		if(!isNotOnlyFrontFaces)
-		{
+		if (!isNotOnlyFrontFaces) {
 			res = frontPaths;
-		}
-		else
-		{
+		} else {
 			res = {frontPaths: frontPaths, darkPaths: darkPaths};
 		}
 
@@ -5316,12 +5296,17 @@ CChartsDrawer.prototype =
 
 		// получаем точки основания цилиндра через парамметрические уравнения эллиптического цилиндра
 		for (var t = k; t <= Math.PI * 2 + k; t += dt) {
-			A = sizes1 * Math.cos(t);
-			B = sizes2 * Math.sin(t);
+			var diff = 0;
+			if (t > Math.PI * 2 + k - dt) {
+				t += Math.PI/90;
+			}
+
+			A = sizes1 * Math.cos(t + diff);
+			B = sizes2 * Math.sin(t + diff);
 
 			if (cone) {
-				A1 = sizes12 * Math.cos(t);
-				B1 = sizes22 * Math.sin(t);
+				A1 = sizes12 * Math.cos(t + diff);
+				B1 = sizes22 * Math.sin(t + diff);
 				if (hbar) {
 					segmentPoint1 = this._convertAndTurnPoint(centerDownX, centerDownY + A, centerDownZ - B);
 					segmentPoint2 = this._convertAndTurnPoint(centerUpX, centerUpY + A1, centerUpZ - B1);
@@ -5340,7 +5325,7 @@ CChartsDrawer.prototype =
 			}
 
 			segmentPoints.push(segmentPoint1);
-			segmentPoints2.push(segmentPoint2);	
+			segmentPoints2.push({x: 0, y: 0, z: 0});
 		}
 
 		var sortCylinderPoints1 = [];
