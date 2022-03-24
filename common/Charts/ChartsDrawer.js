@@ -6328,6 +6328,11 @@ drawBarChart.prototype = {
 		point7 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72);
 		point8 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82);
 
+
+
+	//calcShapesHelper.prototype.getCylinder = function (/*startX, startY, this.w, height,*/ val/*, this.z, this.d*/, checkPathMethod, hbar, subType, nullPositionOX, maxH, minH) {
+
+		var shapesHelper = new calcShapesHelper(startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth);
 		var facePoints;
 		switch (type) {
 			case AscFormat.BAR_SHAPE_PYRAMID:
@@ -6340,8 +6345,10 @@ drawBarChart.prototype = {
 				break
 			}
 			case AscFormat.BAR_SHAPE_CYLINDER: {
-				paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth,
-					perspectiveDepth, this.subType !== "standard", false, false);
+				//paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, this.subType !== "standard", false, false);
+
+				paths = shapesHelper.getCylinder(val, this.subType !== "standard");
+
 				break;
 			}
 			case AscFormat.BAR_SHAPE_CONE:
@@ -6418,7 +6425,7 @@ drawBarChart.prototype = {
 				arr[cubeCount].z = controlPoint.z;
 				arr[cubeCount].y = controlPoint.y;
 				arr[cubeCount].x = controlPoint.x;
-				arr[cubeCount].isValZero = val === 0 ? true : false;
+				arr[cubeCount].isValZero = val === 0;
 			}
 	
 			for (var k = 0; k < paths.frontPaths.length; k++) {
@@ -14675,6 +14682,310 @@ CColorObj.prototype =
 		}
 	}
 };
+
+	/** @constructor */
+	function calcShapesHelper(x, y, z, w, h, d)
+	{
+		this.x = x;//startX
+		this.y = y;//startY
+		this.z = z;//gapDepth
+
+		this.w = w;//individualBarWidth
+		this.h = h;//height
+		this.d = d;//perspectiveDepth
+
+		this.rotated = null;//hbar
+	}
+
+	calcShapesHelper.prototype.getCylinder = function (/*startX, startY, this.w, height,*/ val/*, this.z, this.d*/, checkPathMethod, hbar, subType, nullPositionOX, maxH, minH) {
+		var centerUpX, centerUpY, centerUpZ, centerDownX, centerDownY, centerDownZ;
+		var points;
+		var sizes1, sizes2, cone, sizes12, sizes22;
+
+		if (this.rotated) {
+			centerDownX = this.x, centerDownY = this.y + this.w / 2, centerDownZ = 0 + this.z + this.d / 2;
+			centerUpX = this.x + this.h, centerUpY = this.y + this.w / 2, centerUpZ = 0 + this.z + this.d / 2;
+		} else {
+			centerDownX = this.x + this.w / 2, centerDownY = this.y, centerDownZ = 0 + this.z + this.d / 2;
+			centerUpX = this.x + this.w / 2, centerUpY = this.y - this.h, centerUpZ = 0 + this.z + this.d / 2;
+		}
+
+		if (subType) {
+			cone = true;
+			// за оси эллипса берем 1/2 длин ребер оснований усеченной пирамиды
+			points = this.isConeIntersection(this.rotated, subType, this.x, this.y, this.h, this.z, this.w, this.d,
+				val, nullPositionOX, maxH, minH);
+
+			if (val === 0) {
+				sizes12 = 0;
+				sizes22 = 0;
+				sizes1 = points.wDown;
+				sizes2 = points.lDown;
+			} else if ((subType === "stacked" || subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+				sizes12 = points.wUp !== 0 ? points.wUp : this.w / 2;
+				sizes22 = points.lUp !== 0 ? points.lUp : this.d / 2;
+				sizes1 = points.wDown;
+				sizes2 = points.lDown;
+			} else {
+				sizes12 = points.wUp;
+				sizes22 = points.lUp;
+				sizes1 = points.wDown !== 0 ? points.wDown : this.w / 2;
+				sizes2 = points.lDown !== 0 ? points.lDown : this.d / 2;
+			}
+
+		} else {
+			//большая и малая полуось эллипса
+			sizes1 = this.w / 2;
+			sizes2 = this.d / 2;
+		}
+
+		var segmentPoints = [];
+		var segmentPoints2 = [];
+		var segmentPoint1, segmentPoint2;
+
+		var A, B, A1, B1;
+		// в ms 180 градусов составляют 17 сегментов
+		// todo пока что рассчитываем дополнительные точки, нужно будет оптимизировать
+		var dt = Math.PI / 34; //Math.PI / 17;
+
+		//рассчитываем стартовый угол
+		var angel = Math.abs(this.processor3D.angleOy);
+		var k = Math.PI / 2;
+		k += angel;
+
+		// получаем точки основания цилиндра через парамметрические уравнения эллиптического цилиндра
+		for (var t = k; t <= Math.PI * 2 + k; t += dt) {
+			var diff = 0;
+			if (t > Math.PI * 2 + k - dt) {
+				t += Math.PI/90;
+			}
+
+			A = sizes1 * Math.cos(t + diff);
+			B = sizes2 * Math.sin(t + diff);
+
+			if (cone) {
+				A1 = sizes12 * Math.cos(t + diff);
+				B1 = sizes22 * Math.sin(t + diff);
+				if (this.rotated) {
+					segmentPoint1 = this._convertAndTurnPoint(centerDownX, centerDownY + A, centerDownZ - B);
+					segmentPoint2 = this._convertAndTurnPoint(centerUpX, centerUpY + A1, centerUpZ - B1);
+				} else {
+					segmentPoint1 = this._convertAndTurnPoint(centerDownX + A, centerDownY, centerDownZ + B);
+					segmentPoint2 = this._convertAndTurnPoint(centerUpX + A1, centerUpY, centerUpZ + B1);
+				}
+			} else {
+				if (this.rotated) {
+					segmentPoint1 = this._convertAndTurnPoint(centerDownX, centerDownY + A, centerDownZ - B);
+					segmentPoint2 = this._convertAndTurnPoint(centerUpX, centerUpY + A, centerUpZ - B);
+				} else {
+					segmentPoint1 = this._convertAndTurnPoint(centerDownX + A, centerDownY, centerDownZ + B);
+					segmentPoint2 = this._convertAndTurnPoint(centerUpX + A, centerUpY, centerUpZ + B);
+				}
+			}
+
+			segmentPoints.push(segmentPoint1);
+			segmentPoints2.push({x: 0, y: 0, z: 0});
+		}
+
+		var sortCylinderPoints1 = [];
+		var sortCylinderPoints2 = [];
+		var invisible = false;
+
+		// сортируем точки по видимости для построения плоскости цилиндра
+		for (var i = 1; i < segmentPoints.length; i++) {
+			if (this._isVisibleVerge3D(segmentPoints[i], segmentPoints[i - 1], segmentPoints2[i - 1], val, true)) {
+				if (!invisible) {
+					sortCylinderPoints1.push(segmentPoints[i - 1]);
+					sortCylinderPoints2.push(segmentPoints2[i - 1]);
+				}
+				else {
+					break;
+				}
+			} else {
+				invisible = true;
+			}
+		}
+		if (invisible) {
+			for (var k = segmentPoints.length - 1; i <= k; k--) {
+				if (this._isVisibleVerge3D(segmentPoints[k], segmentPoints[k - 1], segmentPoints2[k - 1], val, true)) {
+					sortCylinderPoints1.unshift(segmentPoints[k - 1]);
+					sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
+				}
+			}
+		}
+		var isNotAllPointsVisible = invisible;
+
+		// проверяем если все точки поверхности цилиндра(конуса) либо видимы либо невидимы
+		// если уловие выполняется, то для отрисовки цилиндра(конуса) достаточно отрисовать эллипс (т.е вид сверху или снизу)
+		if (sortCylinderPoints1.length === 0 || sortCylinderPoints2.length === 0) {
+			sortCylinderPoints1 = segmentPoints;
+			sortCylinderPoints2 = segmentPoints2;
+			isNotAllPointsVisible = false;
+		}
+
+		var x12, y12, z12, x22, y22, z22, x32, y32, z32, x42, y42, z42, x52, y52, z52, x62, y62, z62, x72, y72, z72, x82, y82, z82;
+		var point1, point2, point4, point5, point6, point8;
+
+		if (this.rotated) {
+			x12 = this.x, y12 = this.y, z12 = 0 + this.z;
+			x42 = this.x + this.h, y42 = this.y, z42 = this.d + this.z;
+			x52 = this.x, y52 = this.y + this.w, z52 = 0 + this.z;
+			x62 = this.x, y62 = this.y + this.w, z62 = this.d + this.z;
+			x72 = this.x + this.h, y72 = this.y + this.w, z72 =  this.d + this.z;
+			x82 = this.x + this.h, y82 = this.y + this.w, z82 = 0 + this.z;
+
+			point1 = this._convertAndTurnPoint(x12, y12, z12);
+			point2 = this._convertAndTurnPoint(x52, y52, z52);
+			point4 = this._convertAndTurnPoint(x62, y62, z62);
+			point5 = this._convertAndTurnPoint(x72, y72, z72);
+			point6 = this._convertAndTurnPoint(x42, y42, z42);
+			point8 = this._convertAndTurnPoint(x82, y82, z82);
+		} else {
+			x12 = this.x, y12 = this.y, z12 = 0 + this.z;
+			x22 = this.x, y22 = this.y, z22 = this.d + this.z;
+			x42 = this.x + this.w, y42 = this.y, z42 = 0 + this.z;
+			x52 = this.x, y52 = this.y - this.h, z52 = 0 + this.z;
+			x62 = this.x, y62 = this.y - this.h, z62 = this.d + this.z;
+			x82 = this.x + this.w, y82 = this.y - this.h, z82 = 0 + this.z;
+
+			point1 = this._convertAndTurnPoint(x12, y12, z12);
+			point2 = this._convertAndTurnPoint(x22, y22, z22);
+			point4 = this._convertAndTurnPoint(x42, y42, z42);
+			point5 = this._convertAndTurnPoint(x52, y52, z52);
+			point6 = this._convertAndTurnPoint(x62, y62, z62);
+			point8 = this._convertAndTurnPoint(x82, y82, z82);
+		}
+
+		var points = [segmentPoints, segmentPoints2, point1, point2, point4, point5, point6, point8,
+			sortCylinderPoints1, sortCylinderPoints2];
+		var paths = this.calculateCylinder(points, val, checkPathMethod, false, isNotAllPointsVisible, cone);
+
+		return paths;
+	};
+
+	calcShapesHelper.prototype.isConeIntersection = function (hbar, subType, startX, startY, height, gapDepth, individualBarValue, perspectiveDepth, val, nullPositionOX, maxH, minH) {
+		var wUp, lUp, wDown, lDown;
+		var value, l1, l2, l3, l4;
+		var pyramidX1, pyramidX2, pyramidY1, pyramidY2, rectX1, rectX2, rectY1, rectY2;
+		if (subType === "stacked" || subType === "stackedPer") {
+			value = maxH;
+			if (val < 0 && minH) {
+				value = minH;
+			}
+		} else {
+			value = height;
+			if (maxH) {
+				value = hbar ? -maxH : maxH;
+			}
+			if (minH && val < 0) {
+				value = hbar ? -minH: minH;
+			}
+		}
+		if (this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+			if (subType === "stacked" || subType === "stackedPer") {
+				if (hbar) {
+					startX = val < 0 ? --startX : ++startX;
+				} else {
+					startY = val < 0 ? ++startY : --startY;
+				}
+			}
+		}
+
+		// рассчитываем большую и малую полуось оснований усеченного конуса через нахождение точек пересечения линий пирамиды и параллелепипеда
+		if (hbar) {
+			pyramidX1 = startY + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startY, pyramidY2 = nullPositionOX;
+			rectX1 = startY, rectY1 = startX + height;
+			rectX2 = startY + individualBarValue, rectY2 = startX + height;
+
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startY + individualBarValue;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startX + height;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startX + height;
+
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			wUp = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lUp = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+
+			pyramidX1 = startY + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startY, pyramidY2 = nullPositionOX;
+			rectX1 = startY + individualBarValue, rectY1 = startX;
+			rectX2 = startY, rectY2 = startX;
+
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startY + individualBarValue;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startX;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startX;
+
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+		} else {
+			// координаты точек ребра пирамиды в плоскости x, y
+			pyramidX1 = startX + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startX, pyramidY2 = nullPositionOX;
+			// координаты точек стороны пересекающего прямоугольника
+			rectX1 = startX, rectY1 = startY - height;
+			rectX2 = startX + individualBarValue, rectY2 = startY - height;
+
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startX + individualBarValue;
+			pyramidY2 = nullPositionOX;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startY - height;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startY - height;
+
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			pyramidY2 = nullPositionOX;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			wUp = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lUp = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+
+			pyramidX1 = startX + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startX, pyramidY2 = nullPositionOX;
+			rectX1 = startX, rectY1 = startY;
+			rectX2 = startX + individualBarValue, rectY2 = startY;
+
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startX + individualBarValue;
+			pyramidY2 = nullPositionOX;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startY;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startY;
+
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			pyramidY2 = nullPositionOX;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+
+			wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+		}
+
+		return { wUp: wUp, lUp: lUp, wDown: wDown, lDown: lDown };
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscFormat'] = window['AscFormat'] || {};
