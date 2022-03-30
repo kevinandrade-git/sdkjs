@@ -4961,14 +4961,40 @@
 			}
 		}
 
+		var isPrint = this.usePrintScale;
 		var bc = null, bs = c_oAscBorderStyles.None, isNotFirst = false; // cached border color
+		var lastHorBorderProps;
 
-		function drawBorder(type, border, x1, y1, x2, y2) {
+		function drawBorder(type, border, x1, y1, x2, y2, ignoreLastProps) {
+			var eps = 2;
+			if (isPrint && !ignoreLastProps && !lastHorBorderProps && type === c_oAscBorderType.Hor) {
+				lastHorBorderProps = {border: border, x1: x1, x2: x2, y1: y1, y2: y2};
+				return;
+			}
+
 			var isStroke = false, isNewColor = !AscCommonExcel.g_oColorManager.isEqual(bc,
 				border.getColorOrDefault()), isNewStyle = bs !== border.s;
 			if (isNotFirst && (isNewColor || isNewStyle)) {
+
+				if (isPrint && !ignoreLastProps && lastHorBorderProps) {
+					drawBorder(c_oAscBorderType.Hor, lastHorBorderProps.border, lastHorBorderProps.x1, lastHorBorderProps.y1, lastHorBorderProps.x2, lastHorBorderProps.y2, true);
+					lastHorBorderProps = null;
+				}
+
 				ctx.stroke();
 				isStroke = true;
+			} else if (!ignoreLastProps) {
+				if (lastHorBorderProps && type === c_oAscBorderType.Hor) {
+					//либо продолжаем предыдущую линию, либо отрисовыаем предыдущую и начинаем новую
+					if (isPrint && y1 === lastHorBorderProps.y1 && y2 === lastHorBorderProps.y2 && Math.abs(lastHorBorderProps.x2 - x1) < eps) {
+						lastHorBorderProps.x2 = x2;
+						return;
+					}
+				}
+				if (isPrint && !ignoreLastProps && lastHorBorderProps) {
+					drawBorder(c_oAscBorderType.Hor, lastHorBorderProps.border, lastHorBorderProps.x1, lastHorBorderProps.y1, lastHorBorderProps.x2, lastHorBorderProps.y2, true);
+					lastHorBorderProps = null;
+				}
 			}
 
 			if (isNewColor) {
@@ -5261,6 +5287,10 @@
 			arrPrevRow = arrCurrRow;
 			arrCurrRow = arrNextRow;
 			arrNextRow = [];
+		}
+
+		if (lastHorBorderProps) {
+			drawBorder(c_oAscBorderType.Hor, lastHorBorderProps.border, lastHorBorderProps.x1, lastHorBorderProps.y1, lastHorBorderProps.x2, lastHorBorderProps.y2, true);
 		}
 
 		if (isNotFirst) {
