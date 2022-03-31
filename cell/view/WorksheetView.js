@@ -1791,7 +1791,7 @@
 				hR = 0;  // Скрытая строка, высоту выставляем 0
 			} else {
 				// Берем высоту из модели, если она custom(баг 15618), либо дефолтную
-				if (row.h > 0 && (row.getCustomHeight() || row.getCalcHeight())) {
+				if (row.h > 0 /*&& (row.getCustomHeight() || row.getCalcHeight())*/) {
 					hR = row.h;
 				} else {
 					hR = -1;
@@ -7028,6 +7028,13 @@
 
 					t.updateRowHeightValuePx = t.defaultRowHeightPx;
 					row = t.rows[r];
+
+					var defaultRowHeight =  t.model.getRowHeight(r);
+					if (!defaultRowHeight || defaultRowHeight < 0) {
+						defaultRowHeight = t.defaultRowHeightPx;
+					} else {
+						defaultRowHeight = AscCommonExcel.convertPtToPx(defaultRowHeight);
+					}
 					row.height = t.workbook.printPreviewState.isStart() ? t.defaultRowHeightPx * t.getZoom() : Asc.round(t.defaultRowHeightPx * t.getZoom());
 					row._heightForPrint = null;
 					row.descender = t.defaultRowDescender;
