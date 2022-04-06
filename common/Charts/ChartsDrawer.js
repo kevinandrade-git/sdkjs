@@ -115,6 +115,8 @@ function CChartsDrawer()
 	this.backWall3DChart = null;
 
 	this.changeAxisMap = null;
+
+	this.shapesHelper = new calcShapesHelper(this);
 }
 
 CChartsDrawer.prototype =
@@ -6142,7 +6144,39 @@ drawBarChart.prototype = {
 
 	//calcShapesHelper.prototype.getCylinder = function (/*startX, startY, this.w, height,*/ val/*, this.z, this.d*/, checkPathMethod, hbar, subType, nullPositionOX, maxH, minH) {
 
-		var shapesHelper = new calcShapesHelper(this.cChartDrawer, startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth);
+		var needAddOnlyFrontFace = this.subType === "standard";
+
+		var cone, sizes12, sizes22, sizes1, sizes2;
+		if (this.subType) {
+			cone = true;
+			// за оси эллипса берем 1/2 длин ребер оснований усеченной пирамиды
+			points = this.isConeIntersection(false, this.subType, startX, startY, height, gapDepth, individualBarWidth, perspectiveDepth, val, nullPositionOX, maxH, minH);
+
+			if (this.val === 0) {
+				sizes12 = 0;
+				sizes22 = 0;
+				sizes1 = points.wDown;
+				sizes2 = points.lDown;
+			} else if ((this.subType === "stacked" || this.subType === "stackedPer") && this.chartsDrawer.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+				sizes12 = points.wUp !== 0 ? points.wUp : this.w / 2;
+				sizes22 = points.lUp !== 0 ? points.lUp : this.d / 2;
+				sizes1 = points.wDown;
+				sizes2 = points.lDown;
+			} else {
+				sizes12 = points.wUp;
+				sizes22 = points.lUp;
+				sizes1 = points.wDown !== 0 ? points.wDown : this.w / 2;
+				sizes2 = points.lDown !== 0 ? points.lDown : this.d / 2;
+			}
+
+		} else {
+			//большая и малая полуось эллипса
+			sizes1 = this.w / 2;
+			sizes2 = this.d / 2;
+		}
+
+
+
 		var facePoints;
 		switch (type) {
 			case AscFormat.BAR_SHAPE_PYRAMID:
@@ -6156,8 +6190,8 @@ drawBarChart.prototype = {
 			}
 			case AscFormat.BAR_SHAPE_CYLINDER: {
 				//paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, this.subType !== "standard", false, false);
-
-				paths = shapesHelper.getCylinder(val, this.subType !== "standard");
+				this.cChartDrawer.shapesHelper.setProps(startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth, needAddOnlyFrontFace, val, false, sizes1, sizes2, sizes12, sizes22, cone);
+				paths = this.cChartDrawer.shapesHelper.getCylinder();
 
 				break;
 			}
@@ -14495,10 +14529,30 @@ CColorObj.prototype =
 };
 
 	/** @constructor */
-	function calcShapesHelper(cd, x, y, z, w, h, d)
+	function calcShapesHelper(chartsDrawer)
 	{
-		this.chartsDrawer = cd;
+		this.chartsDrawer = chartsDrawer;
 
+		this.x;//startX
+		this.y;//startY
+		this.z;//gapDepth
+
+		this.w;//individualBarWidth
+		this.h;//height
+		this.d;//perspectiveDepth
+
+		this.onlyFrontFaces;
+		this.val;
+		this.rotated ;//hbar
+
+		this.sizes1;
+		this.sizes2;
+		this.sizes12;
+		this.sizes22;
+		this.cone;
+	}
+
+	calcShapesHelper.prototype.setProps = function (x, y, z, w, h, d, onlyFrontFaces, val, rotated, sizes1, sizes2, sizes12, sizes22, cone) {
 		this.x = x;//startX
 		this.y = y;//startY
 		this.z = z;//gapDepth
@@ -14507,13 +14561,19 @@ CColorObj.prototype =
 		this.h = h;//height
 		this.d = d;//perspectiveDepth
 
-		this.rotated = null;//hbar
-	}
+		this.onlyFrontFaces = onlyFrontFaces;
+		this.val = val;
+		this.rotated = rotated;//hbar
 
-	calcShapesHelper.prototype.getCylinder = function (/*startX, startY, this.w, height,*/ val/*, this.z, this.d*/, checkPathMethod, hbar, subType, nullPositionOX, maxH, minH) {
+		this.sizes1 = sizes1;
+		this.sizes2 = sizes2;
+		this.sizes12 = sizes12;
+		this.sizes22 = sizes22;
+		this.cone = cone;
+	};
+
+	calcShapesHelper.prototype.getCylinder = function () {
 		var centerUpX, centerUpY, centerUpZ, centerDownX, centerDownY, centerDownZ;
-		var points;
-		var sizes1, sizes2, cone, sizes12, sizes22;
 
 		if (this.rotated) {
 			centerDownX = this.x, centerDownY = this.y + this.w / 2, centerDownZ = 0 + this.z + this.d / 2;
@@ -14521,35 +14581,6 @@ CColorObj.prototype =
 		} else {
 			centerDownX = this.x + this.w / 2, centerDownY = this.y, centerDownZ = 0 + this.z + this.d / 2;
 			centerUpX = this.x + this.w / 2, centerUpY = this.y - this.h, centerUpZ = 0 + this.z + this.d / 2;
-		}
-
-		if (subType) {
-			cone = true;
-			// за оси эллипса берем 1/2 длин ребер оснований усеченной пирамиды
-			points = this.isConeIntersection(this.rotated, subType, this.x, this.y, this.h, this.z, this.w, this.d,
-				val, nullPositionOX, maxH, minH);
-
-			if (val === 0) {
-				sizes12 = 0;
-				sizes22 = 0;
-				sizes1 = points.wDown;
-				sizes2 = points.lDown;
-			} else if ((subType === "stacked" || subType === "stackedPer") && this.chartsDrawer.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
-				sizes12 = points.wUp !== 0 ? points.wUp : this.w / 2;
-				sizes22 = points.lUp !== 0 ? points.lUp : this.d / 2;
-				sizes1 = points.wDown;
-				sizes2 = points.lDown;
-			} else {
-				sizes12 = points.wUp;
-				sizes22 = points.lUp;
-				sizes1 = points.wDown !== 0 ? points.wDown : this.w / 2;
-				sizes2 = points.lDown !== 0 ? points.lDown : this.d / 2;
-			}
-
-		} else {
-			//большая и малая полуось эллипса
-			sizes1 = this.w / 2;
-			sizes2 = this.d / 2;
 		}
 
 		var segmentPoints = [];
@@ -14606,7 +14637,7 @@ CColorObj.prototype =
 
 		// сортируем точки по видимости для построения плоскости цилиндра
 		for (var i = 1; i < segmentPoints.length; i++) {
-			if (this.chartsDrawer._isVisibleVerge3D(segmentPoints[i], segmentPoints[i - 1], segmentPoints2[i - 1], val, true)) {
+			if (this.chartsDrawer._isVisibleVerge3D(segmentPoints[i], segmentPoints[i - 1], segmentPoints2[i - 1], this.val, true)) {
 				if (!invisible) {
 					sortCylinderPoints1.push(segmentPoints[i - 1]);
 					sortCylinderPoints2.push(segmentPoints2[i - 1]);
@@ -14620,7 +14651,7 @@ CColorObj.prototype =
 		}
 		if (invisible) {
 			for (var k = segmentPoints.length - 1; i <= k; k--) {
-				if (this.chartsDrawer._isVisibleVerge3D(segmentPoints[k], segmentPoints[k - 1], segmentPoints2[k - 1], val, true)) {
+				if (this.chartsDrawer._isVisibleVerge3D(segmentPoints[k], segmentPoints[k - 1], segmentPoints2[k - 1], this.val, true)) {
 					sortCylinderPoints1.unshift(segmentPoints[k - 1]);
 					sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
 				}
@@ -14655,6 +14686,7 @@ CColorObj.prototype =
 			point8 = this.chartsDrawer._convertAndTurnPoint(x82, y82, z82);
 		} else {
 			x12 = this.x, y12 = this.y, z12 = 0 + this.z;
+
 			x22 = this.x, y22 = this.y, z22 = this.d + this.z;
 			x42 = this.x + this.w, y42 = this.y, z42 = 0 + this.z;
 			x52 = this.x, y52 = this.y - this.h, z52 = 0 + this.z;
@@ -14671,136 +14703,12 @@ CColorObj.prototype =
 
 		var points = [segmentPoints, segmentPoints2, point1, point2, point4, point5, point6, point8,
 			sortCylinderPoints1, sortCylinderPoints2];
-		var paths = this.calculateCylinder(points, val, checkPathMethod, false, isNotAllPointsVisible, cone);
+		var paths = this.calculateCylinder(points, false, isNotAllPointsVisible, cone);
 
 		return paths;
 	};
 
-	calcShapesHelper.prototype.isConeIntersection = function (hbar, subType, startX, startY, height, gapDepth, individualBarValue, perspectiveDepth, val, nullPositionOX, maxH, minH) {
-		var wUp, lUp, wDown, lDown;
-		var value, l1, l2, l3, l4;
-		var pyramidX1, pyramidX2, pyramidY1, pyramidY2, rectX1, rectX2, rectY1, rectY2;
-		if (subType === "stacked" || subType === "stackedPer") {
-			value = maxH;
-			if (val < 0 && minH) {
-				value = minH;
-			}
-		} else {
-			value = height;
-			if (maxH) {
-				value = hbar ? -maxH : maxH;
-			}
-			if (minH && val < 0) {
-				value = hbar ? -minH: minH;
-			}
-		}
-		if (this.chartsDrawer.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
-			if (subType === "stacked" || subType === "stackedPer") {
-				if (hbar) {
-					startX = val < 0 ? --startX : ++startX;
-				} else {
-					startY = val < 0 ? ++startY : --startY;
-				}
-			}
-		}
-
-		// рассчитываем большую и малую полуось оснований усеченного конуса через нахождение точек пересечения линий пирамиды и параллелепипеда
-		if (hbar) {
-			pyramidX1 = startY + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
-			pyramidX2 = startY, pyramidY2 = nullPositionOX;
-			rectX1 = startY, rectY1 = startX + height;
-			rectX2 = startY + individualBarValue, rectY2 = startX + height;
-
-			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-			pyramidX2 = startY + individualBarValue;
-			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-
-			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
-			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
-			rectX1 = gapDepth, rectY1 = startX + height;
-			rectX2 = gapDepth + perspectiveDepth, rectY2 = startX + height;
-
-			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-			pyramidX2 = gapDepth + perspectiveDepth;
-			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-
-			wUp = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
-			lUp = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
-
-			pyramidX1 = startY + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
-			pyramidX2 = startY, pyramidY2 = nullPositionOX;
-			rectX1 = startY + individualBarValue, rectY1 = startX;
-			rectX2 = startY, rectY2 = startX;
-
-			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-			pyramidX2 = startY + individualBarValue;
-			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-
-			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
-			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
-			rectX1 = gapDepth, rectY1 = startX;
-			rectX2 = gapDepth + perspectiveDepth, rectY2 = startX;
-
-			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-			pyramidX2 = gapDepth + perspectiveDepth;
-			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-
-			wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
-			lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
-		} else {
-			// координаты точек ребра пирамиды в плоскости x, y
-			pyramidX1 = startX + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
-			pyramidX2 = startX, pyramidY2 = nullPositionOX;
-			// координаты точек стороны пересекающего прямоугольника
-			rectX1 = startX, rectY1 = startY - height;
-			rectX2 = startX + individualBarValue, rectY2 = startY - height;
-
-			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-			pyramidX2 = startX + individualBarValue;
-			pyramidY2 = nullPositionOX;
-			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-
-			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
-			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
-			rectX1 = gapDepth, rectY1 = startY - height;
-			rectX2 = gapDepth + perspectiveDepth, rectY2 = startY - height;
-
-			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-			pyramidX2 = gapDepth + perspectiveDepth;
-			pyramidY2 = nullPositionOX;
-			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-
-			wUp = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
-			lUp = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
-
-			pyramidX1 = startX + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
-			pyramidX2 = startX, pyramidY2 = nullPositionOX;
-			rectX1 = startX, rectY1 = startY;
-			rectX2 = startX + individualBarValue, rectY2 = startY;
-
-			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-			pyramidX2 = startX + individualBarValue;
-			pyramidY2 = nullPositionOX;
-			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-
-			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
-			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
-			rectX1 = gapDepth, rectY1 = startY;
-			rectX2 = gapDepth + perspectiveDepth, rectY2 = startY;
-
-			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-			pyramidX2 = gapDepth + perspectiveDepth;
-			pyramidY2 = nullPositionOX;
-			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
-
-			wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
-			lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
-		}
-
-		return { wUp: wUp, lUp: lUp, wDown: wDown, lDown: lDown };
-	};
-
-	calcShapesHelper.prototype.calculateCylinder = function (points, val, isNotOnlyFrontFaces, notDraw, isNotAllPointsVisible, cone) {
+	calcShapesHelper.prototype.calculateCylinder = function (points, notDraw, isNotAllPointsVisible, cone) {
 		var res;
 		var segmentPoints = points[0];
 		var segmentPoints2 = points[1];
@@ -14835,15 +14743,15 @@ CColorObj.prototype =
 		//front
 		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, isNotAllPointsVisible);
 		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
-			sortCylinderPoints2[0], val, !isVisibleReverse), faceFront, 0);
+			sortCylinderPoints2[0], this.val, !isVisibleReverse), faceFront, 0);
 
 		//down
-		if (val === 0) {
+		if (this.val === 0) {
 			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
 			addPathToArr(true, face, 1);
 		} else {
 			if (cone) {
-				if (this._isVisibleVerge3D(point4, point1, point2, val)) {
+				if (this._isVisibleVerge3D(point4, point1, point2, this.val)) {
 					face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
 					addPathToArr(true, face, 1);
 				} else {
@@ -14852,18 +14760,18 @@ CColorObj.prototype =
 				}
 			} else {
 				face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
-				addPathToArr(this._isVisibleVerge3D(point4, point1, point2, val), face, 1);
+				addPathToArr(this._isVisibleVerge3D(point4, point1, point2, this.val), face, 1);
 			}
 		}
 
 		//up
 		if (!notDraw) {
-			if (val === 0) {
+			if (this.val === 0) {
 				face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
 				addPathToArr(true, face, 4);
 			} else {
 				if (cone) {
-					if (this._isVisibleVerge3D(point6, point5, point8, val)) {
+					if (this._isVisibleVerge3D(point6, point5, point8, this.val)) {
 						face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
 						addPathToArr(true, face, 4);
 					} else {
@@ -14872,7 +14780,7 @@ CColorObj.prototype =
 					}
 				} else {
 					face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
-					addPathToArr(this._isVisibleVerge3D(point6, point5, point8, val), face, 4);
+					addPathToArr(this._isVisibleVerge3D(point6, point5, point8, this.val), face, 4);
 				}
 			}
 		}
@@ -14880,9 +14788,9 @@ CColorObj.prototype =
 		//unfront
 		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, isNotAllPointsVisible);
 		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
-			sortCylinderPoints2[0], val, isVisibleReverse), faceFront, 5);
+			sortCylinderPoints2[0], this.val, isVisibleReverse), faceFront, 5);
 
-		if (!isNotOnlyFrontFaces) {
+		if (this.onlyFrontFaces) {
 			res = frontPaths;
 		} else {
 			res = { frontPaths: frontPaths, darkPaths: darkPaths };
