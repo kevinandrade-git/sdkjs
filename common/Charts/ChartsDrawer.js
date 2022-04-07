@@ -116,7 +116,7 @@ function CChartsDrawer()
 
 	this.changeAxisMap = null;
 
-	this.shapesHelper = new calcShapesHelper(this);
+	this.calcShapesHelper = new calcShapesHelper(this);
 }
 
 CChartsDrawer.prototype =
@@ -6329,35 +6329,37 @@ drawBarChart.prototype = {
 		var needAddOnlyFrontFace = this.subType === "standard";
 		var nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;
 
-		var cone, sizes12, sizes22, sizes1, sizes2;
-		if (false) {
-			cone = true;
-			// за оси эллипса берем 1/2 длин ребер оснований усеченной пирамиды
-			points = this.cChartDrawer.isConeIntersection(false, this.subType, startX, startY, height, gapDepth, individualBarWidth, perspectiveDepth, val, nullPositionOX, maxH, minH);
+		var t = this;
+		var dRadius1, dRadius2, uRadius1, uRadius2;
+		var calcCylinderProps = function (bCone) {
+			//большая и малая полуось оснований усеченного конуса
+			if (bCone) {
+				// за оси эллипса берем 1/2 длин ребер оснований усеченной пирамиды
+				points = t.cChartDrawer.isConeIntersection(false, t.subType, startX, startY, height, gapDepth, individualBarWidth, perspectiveDepth, val, nullPositionOX, maxH, minH);
 
-			if (this.val === 0) {
-				sizes12 = 0;
-				sizes22 = 0;
-				sizes1 = points.wDown;
-				sizes2 = points.lDown;
-			} else if ((this.subType === "stacked" || this.subType === "stackedPer") && this.chartsDrawer.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
-				sizes12 = points.wUp !== 0 ? points.wUp : individualBarWidth / 2;
-				sizes22 = points.lUp !== 0 ? points.lUp : perspectiveDepth / 2;
-				sizes1 = points.wDown;
-				sizes2 = points.lDown;
+				if (t.val === 0) {
+					uRadius1 = 0;
+					uRadius2 = 0;
+					dRadius1 = points.wDown;
+					dRadius2 = points.lDown;
+				} else if ((t.subType === "stacked" || t.subType === "stackedPer") && t.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+					uRadius1 = points.wUp !== 0 ? points.wUp : individualBarWidth / 2;
+					uRadius2 = points.lUp !== 0 ? points.lUp : perspectiveDepth / 2;
+					dRadius1 = points.wDown;
+					dRadius2 = points.lDown;
+				} else {
+					uRadius1 = points.wUp;
+					uRadius2 = points.lUp;
+					dRadius1 = points.wDown !== 0 ? points.wDown : individualBarWidth / 2;
+					dRadius2 = points.lDown !== 0 ? points.lDown : perspectiveDepth/ 2;
+				}
+
 			} else {
-				sizes12 = points.wUp;
-				sizes22 = points.lUp;
-				sizes1 = points.wDown !== 0 ? points.wDown : individualBarWidth / 2;
-				sizes2 = points.lDown !== 0 ? points.lDown : perspectiveDepth/ 2;
+				//большая и малая полуось эллипса
+				dRadius1 = individualBarWidth / 2;
+				dRadius2 = perspectiveDepth / 2;
 			}
-
-		} else {
-			//большая и малая полуось эллипса
-			sizes1 = individualBarWidth / 2;
-			sizes2 = perspectiveDepth / 2;
-		}
-
+		};
 
 
 		var facePoints;
@@ -6371,22 +6373,21 @@ drawBarChart.prototype = {
 				break
 			}
 			case AscFormat.BAR_SHAPE_CYLINDER: {
+				//paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, this.subType !== "standard", false, false);
 
-				paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, this.subType !== "standard", false, false);
-				this.cChartDrawer.shapesHelper.setProps(startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth, needAddOnlyFrontFace, val, false, sizes1, sizes2, sizes12, sizes22, cone);
-				paths = this.cChartDrawer.shapesHelper.getCylinder();
+				calcCylinderProps();
+				this.cChartDrawer.calcShapesHelper.setProps(startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth, needAddOnlyFrontFace, val, false, dRadius1, dRadius2);
+				paths = this.cChartDrawer.calcShapesHelper.getCylinder();
 
 				break;
 			}
 			case AscFormat.BAR_SHAPE_CONE:
 			case AscFormat.BAR_SHAPE_CONETOMAX: {
+				//paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, this.subType !== "standard", false, this.subType, nullPositionOX, maxH, minH);
 
-				paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth,
-					perspectiveDepth, this.subType !== "standard", false, this.subType, nullPositionOX, maxH, minH);
-
-				//this.cChartDrawer.shapesHelper.setProps(startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth, needAddOnlyFrontFace, val, false, sizes1, sizes2, sizes12, sizes22, cone);
-				//paths = this.cChartDrawer.shapesHelper.getCylinder();
-
+				calcCylinderProps(true);
+				this.cChartDrawer.calcShapesHelper.setProps(startX, startY, gapDepth, individualBarWidth, height, perspectiveDepth, needAddOnlyFrontFace, val, false, dRadius1, dRadius2, uRadius1, uRadius2);
+				paths = this.cChartDrawer.calcShapesHelper.getCone();
 
 				break;
 			}
@@ -14732,14 +14733,14 @@ CColorObj.prototype =
 		this.val;
 		this.rotated ;//hbar
 
-		this.sizes1;
-		this.sizes2;
-		this.sizes12;
-		this.sizes22;
-		this.cone;
+		this.dRadius1;
+		this.dRadius2;
+		//нужны только для конусов uRadius1/uRadius2
+		this.uRadius1;
+		this.uRadius2;
 	}
 
-	calcShapesHelper.prototype.setProps = function (x, y, z, w, h, d, onlyFrontFaces, val, rotated, sizes1, sizes2, sizes12, sizes22, cone) {
+	calcShapesHelper.prototype.setProps = function (x, y, z, w, h, d, onlyFrontFaces, val, rotated, dRadius1, dRadius2, uRadius1, uRadius2, cone) {
 		this.x = x;//startX
 		this.y = y;//startY
 		this.z = z;//gapDepth
@@ -14752,14 +14753,21 @@ CColorObj.prototype =
 		this.val = val;
 		this.rotated = rotated;//hbar
 
-		this.sizes1 = sizes1;
-		this.sizes2 = sizes2;
-		this.sizes12 = sizes12;
-		this.sizes22 = sizes22;
-		this.cone = cone;
+		this.dRadius1 = dRadius1;
+		this.dRadius2 = dRadius2;
+		this.uRadius1 = uRadius1;
+		this.uRadius2 = uRadius2;
+	};
+
+	calcShapesHelper.prototype.getCone = function () {
+		return this._getCylinder(true);
 	};
 
 	calcShapesHelper.prototype.getCylinder = function () {
+		return this._getCylinder();
+	};
+
+	calcShapesHelper.prototype._getCylinder = function (bCone) {
 		var centerUpX, centerUpY, centerUpZ, centerDownX, centerDownY, centerDownZ;
 
 		if (this.rotated) {
@@ -14786,12 +14794,12 @@ CColorObj.prototype =
 
 		// получаем точки основания цилиндра через парамметрические уравнения эллиптического цилиндра
 		for (var t = k; t <= Math.PI * 2 + k; t += dt) {
-			A = this.sizes1 * Math.cos(t);
-			B = this.sizes2 * Math.sin(t);
+			A = this.dRadius1 * Math.cos(t);
+			B = this.dRadius2 * Math.sin(t);
 
-			if (this.cone) {
-				A1 = this.sizes12 * Math.cos(t);
-				B1 = this.sizes22 * Math.sin(t);
+			if (bCone) {
+				A1 = this.uRadius1 * Math.cos(t);
+				B1 = this.uRadius2 * Math.sin(t);
 				if (this.rotated) {
 					segmentPoint1 = this.chartsDrawer._convertAndTurnPoint(centerDownX, centerDownY + A, centerDownZ - B);
 					segmentPoint2 = this.chartsDrawer._convertAndTurnPoint(centerUpX, centerUpY + A1, centerUpZ - B1);
@@ -14886,7 +14894,7 @@ CColorObj.prototype =
 		var points = [segmentPoints, segmentPoints2, point1, point2, point4, point5, point6, point8,
 			sortCylinderPoints1, sortCylinderPoints2];
 
-		return this.calculateCylinder(points, false, isNotAllPointsVisible, this.cone);
+		return this.calculateCylinder(points, false, isNotAllPointsVisible, bCone);
 	};
 
 	calcShapesHelper.prototype.calculateCylinder = function (points, notDraw, isNotAllPointsVisible, cone) {
