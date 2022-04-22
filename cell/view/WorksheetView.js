@@ -6598,10 +6598,46 @@
     WorksheetView.prototype._addCellTextToCache = function (col, row) {
         var self = this;
 
+		var realScaleProps;
+
+		function changeScaleFactor(str, flags, width) {
+			if (undefined === width) {
+				if (realScaleProps) {
+					self.stringRender.drawingCtx.ppiX = realScaleProps.ppiX;
+					self.stringRender.drawingCtx.ppiY = realScaleProps.ppiY;
+					self.stringRender.drawingCtx.scaleFactor = realScaleProps.scaleFactor;
+					self.stringRender.fontNeedUpdate = true;
+				}
+			} else {
+				//пытаемся вписать размер текста в размер ячейки
+				realScaleProps = {ppiX: self.stringRender.drawingCtx.ppiX, ppiY: self.stringRender.drawingCtx.ppiY, scaleFactor: self.stringRender.drawingCtx.scaleFactor};
+
+				var limitIter = 20;
+				var iter = 0;
+				var basePpi = self.stringRender.drawingCtx.ppiX / self.stringRender.drawingCtx.scaleFactor;
+				while (self.stringRender.measureString(str, flags, width).width > width) {
+					if (iter > limitIter) {
+						self.stringRender.drawingCtx.ppiX = realScaleProps.ppiX;
+						self.stringRender.drawingCtx.ppiY = realScaleProps.ppiY;
+						self.stringRender.drawingCtx.scaleFactor = realScaleProps.scaleFactor;
+						self.stringRender.fontNeedUpdate = true;
+						realScaleProps = null;
+						break;
+					}
+					self.stringRender.drawingCtx.scaleFactor = self.stringRender.drawingCtx.scaleFactor - 0.01;
+					self.stringRender.drawingCtx.ppiX = basePpi * self.stringRender.drawingCtx.scaleFactor;
+					self.stringRender.drawingCtx.ppiY = basePpi * self.stringRender.drawingCtx.scaleFactor;
+					self.stringRender.fontNeedUpdate = true;
+					iter++;
+				}
+			}
+		}
+
         function makeFnIsGoodNumFormat(flags, width, isWidth) {
             return function (str) {
 				var widthStr;
 				var widthWithoutZoom = null;
+				var notGoodFormatScale = null;
 				if (isWidth && self.workbook.printPreviewState && self.workbook.printPreviewState.isStart()) {
 					//заглушка для печати
 					//попробовать перейти на все расчёты как при 100%(потом * zoom)
@@ -6613,6 +6649,10 @@
 					var realPpiX = self.stringRender.drawingCtx.ppiX;
 					var realPpiY = self.stringRender.drawingCtx.ppiY;
 					var realScaleFactor = self.stringRender.drawingCtx.scaleFactor;
+
+					if (self.stringRender.measureString(str, flags, width).width > width) {
+						notGoodFormatScale = true;
+					}
 
 					self.stringRender.drawingCtx.ppiX = 96;
 					self.stringRender.drawingCtx.ppiY = 96;
@@ -6627,6 +6667,10 @@
 					self.stringRender.fontNeedUpdate = true;
 				} else {
 					widthStr = self.stringRender.measureString(str, flags, width).width;
+				}
+				var res = widthStr <= (widthWithoutZoom !== null ? widthWithoutZoom : width);
+				if (res && notGoodFormatScale) {
+					changeScaleFactor(str, flags, width);
 				}
 				return widthStr <= (widthWithoutZoom !== null ? widthWithoutZoom : width);
             };
@@ -6878,6 +6922,7 @@
             this._addErasedBordersToCache(col - cto.leftSide, col + cto.rightSide, row);
         }
 		this._updateRowHeight(cache, row, maxW, colWidth);
+		changeScaleFactor();
 
         return mc ? mc.c2 : col;
     };
