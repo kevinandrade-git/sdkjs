@@ -3637,6 +3637,21 @@
 			return res;
 		};
 
+		var findNeedWidth = function (_fragments, _cellFlags, _maxWidth) {
+			var _textMetrics = t.stringRender._measureChars(_maxWidth);
+			while (_textMetrics.width < t.stringRender.chars.length) {
+				for (var i = 0; i < _fragments.length; i++) {
+					if (_fragments[i].format) {
+						_fragments[i].format.fs++;
+					}
+				}
+				t.stringRender.setString(_fragments, _cellFlags);
+				_textMetrics = t.stringRender._measureChars(_maxWidth)
+			}
+			//t.stringRender.setString(_fragments, _cellFlags);
+			return _textMetrics;
+		};
+
 		var vector_koef = AscCommonExcel.vector_koef / this.getZoom();
 		if (AscCommon.AscBrowser.isCustomScaling()) {
 			vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
@@ -3698,6 +3713,10 @@
 
 			var maxWidth = width - left - right;
 			var textMetrics = t.stringRender._measureChars(maxWidth);
+			if (t.stringRender.chars.length > 0 && textMetrics.width < t.stringRender.chars.length) {
+				textMetrics = findNeedWidth(fragments, cellFlags, maxWidth);
+			}
+
 			var x, y;
 			switch(index) {
 				case window["AscCommonExcel"].c_oPortionPosition.left: {
