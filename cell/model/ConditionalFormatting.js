@@ -486,9 +486,36 @@
 			History.Add(AscCommonExcel.g_oUndoRedoCF, AscCH.historyitem_CFRule_SetRanges,
 				ws.getId(), this.getUnionRange(location), new AscCommonExcel.UndoRedoData_CF(this.id, getUndoRedoRange(this.ranges), getUndoRedoRange(location)));
 		}
+
 		this.ranges = location;
+
+		this.updateRuleElementsAfterChangeLocation();
 		if (ws) {
 			ws.cleanConditionalFormattingRangeIterator();
+		}
+	};
+
+	CConditionalFormattingRule.prototype.updateRuleElementsAfterChangeLocation = function (propOld, propNew, type, ws, addToHistory) {
+		/*if (val[0] === "=") {
+			val = val.slice(1);
+			//генерируем массив
+			this.aRuleElements = [];
+			this.aRuleElements[0] = new CFormulaCF();
+			this.aRuleElements[0].Text = this.getFormulaByType(val);
+			this.aRuleElements[1] = new CFormulaCF();
+			this.aRuleElements[1].Text = val;
+			this.text = null;
+		} else {
+			this.aRuleElements = [];
+			this.aRuleElements[0] = new CFormulaCF();
+			this.aRuleElements[0].Text = this.getFormulaByType(val);
+			this.text = val;
+		}*/
+		if (this.text && this.aRuleElements && this.aRuleElements[0] && this.aRuleElements[0].Text) {
+			var changedText = this.getFormulaByType(this.text);
+			if (changedText) {
+				this.aRuleElements[0].Text = changedText;
+			}
 		}
 	};
 
@@ -1176,7 +1203,7 @@
 			if (val[0] === "=") {
 				val = val.slice(1);
 			}
-			val = val.split(",");
+			val = val.split(AscCommon.FormulaSeparators.functionArgumentSeparator);
 			this.ranges = [];
 			val.forEach(function (item) {
 				if (-1 !== item.indexOf("!")) {
