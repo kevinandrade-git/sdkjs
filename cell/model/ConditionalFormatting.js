@@ -495,24 +495,15 @@
 		}
 	};
 
-	CConditionalFormattingRule.prototype.updateRuleElementsAfterChangeLocation = function (propOld, propNew, type, ws, addToHistory) {
-		/*if (val[0] === "=") {
-			val = val.slice(1);
-			//генерируем массив
-			this.aRuleElements = [];
-			this.aRuleElements[0] = new CFormulaCF();
-			this.aRuleElements[0].Text = this.getFormulaByType(val);
-			this.aRuleElements[1] = new CFormulaCF();
-			this.aRuleElements[1].Text = val;
-			this.text = null;
-		} else {
-			this.aRuleElements = [];
-			this.aRuleElements[0] = new CFormulaCF();
-			this.aRuleElements[0].Text = this.getFormulaByType(val);
-			this.text = val;
-		}*/
+	CConditionalFormattingRule.prototype.updateRuleElementsAfterChangeLocation = function () {
+		var changedText;
 		if (this.text && this.aRuleElements && this.aRuleElements[0] && this.aRuleElements[0].Text) {
-			var changedText = this.getFormulaByType(this.text);
+			changedText = this.getFormulaByType(this.text);
+			if (changedText) {
+				this.aRuleElements[0].Text = changedText;
+			}
+		} else if (this.aRuleElements && this.aRuleElements[0] && this.aRuleElements[0].Text && this.aRuleElements[1] && this.aRuleElements[1].Text) {
+			changedText = this.getFormulaByType(this.aRuleElements[1].Text);
 			if (changedText) {
 				this.aRuleElements[0].Text = changedText;
 			}
