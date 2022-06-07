@@ -10506,6 +10506,10 @@
 			return true;
 		}
 
+		if (this.getColDataLength() < oRange.bbox.c2 || this.cellsByColRowsCount - 1 < oRange.bbox.r2) {
+			return true;
+		}
+
 		oRange._foreach2(function(cell){
 			if (!cell) {
 				res = true;

@@ -1228,10 +1228,16 @@
 		}
 		if (ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectLockedCells)) {
 			//TODO _getRangeByXY ?
+
+
+			//!changeSelectionStartPoint
 			var newRange = isCoord ? ws._getRangeByXY(dc, dr) :
 				ws._calcSelectionEndPointByOffset(dc, dr);
-			var lockedCell = ws.model.getLockedCell(newRange.c2, newRange.r2);
-			if (lockedCell || lockedCell === null) {
+
+
+			console.log("r1: " + newRange.r1 + " r2: " + newRange.r2 + " c1: " + newRange.c1 + "c2: " + newRange.c2);
+
+			if (ws.model.isLockedRange(newRange)) {
 				return;
 			}
 		}
