@@ -921,8 +921,9 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	};
 
 	var vertalign_Baseline    = 0;
-	var vertalign_SuperScript = 1;
-	var vertalign_SubScript   = 2;
+	var vertalign_SubScript   = 1;
+	var vertalign_SuperScript = 2;
+
 	var hdrftr_Header         = 0x01;
 	var hdrftr_Footer         = 0x02;
 
@@ -1961,7 +1962,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var c_oAscUrlType         = {
 		Invalid : 0,
 		Http    : 1,
-		Email   : 2
+		Email   : 2,
+		Unsafe   : 3
 	};
 
 	var c_oAscCellTextDirection = {
@@ -2332,6 +2334,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var changestype_SlideHide                 = 75;
 	var changestype_CorePr                    = 76;
 	var changestype_Document_Settings         = 77; // Изменение общих настроек документа Document.Settings
+	var changestype_Timing                    = 78; // Изменение общих настроек документа Document.Settings
 
 	var changestype_2_InlineObjectMove       = 1; // Передвигаем объект в заданную позцию (проверяем место, в которое пытаемся передвинуть)
 	var changestype_2_HdrFtr                 = 2; // Изменения с колонтитулом
@@ -2688,15 +2691,26 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		UpperRoman                   : 61,
 		VietnameseCounting           : 62,
 
-		BulletFlag   : 0x1000,
-		NumberedFlag : 0x2000,
+		BulletFlag                   : 0x1000,
+		NumberedFlag                 : 0x2000,
 
-		Ea1JpnKor             : 0x3000,
-		CircleNumWdBlack      : 0x4000,
-		Ea1JpnChsDb           : 0x5000,
-		Ea1Cht                : 0x6000,
-		CircleNumWdWhitePlain : 0x7000
+		Ea1JpnKor                    : 0x3000,
+		CircleNumWdBlack             : 0x3001,
+		Ea1JpnChsDb                  : 0x3002,
+		Ea1Cht                       : 0x3003,
+		CircleNumWdWhitePlain        : 0x3004,
 
+		CustomGreece                 : 0x4000,
+		CustomDecimalFourZero        : 0x4001,
+		CustomDecimalThreeZero       : 0x4002,
+		CustomDecimalTwoZero         : 0x4003
+	};
+
+	var c_oAscCustomNumberingFormatAssociation = {
+		'α, β, γ, ...': c_oAscNumberingFormat.CustomGreece,
+		'00001, 00002, 00003, ...': c_oAscNumberingFormat.CustomDecimalFourZero,
+		'0001, 0002, 0003, ...': c_oAscNumberingFormat.CustomDecimalThreeZero,
+		'001, 002, 003, ...': c_oAscNumberingFormat.CustomDecimalTwoZero
 	};
 
 	/** enum {number} */
@@ -3319,6 +3333,68 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Final    : 1,
 		Original : 2,
 		Simple   : 3
+	};
+
+	const LigaturesFlags = {
+		Standard     : 0x01, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_STANDARD,
+		Contextual   : 0x02, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_CONTEXTUAL,
+		Historical   : 0x04, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_HISTORICAL,
+		Discretional : 0x08  //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_DISCRETIONARY
+	};
+
+	const LigaturesType = {
+		None                             : 0x00,
+		Standard                         : LigaturesFlags.Standard,
+		Contextual                       : LigaturesFlags.Contextual,
+		Historical                       : LigaturesFlags.Historical,
+		Discretional                     : LigaturesFlags.Discretional,
+		StandardContextual               : LigaturesFlags.Standard | LigaturesFlags.Contextual,
+		StandardHistorical               : LigaturesFlags.Standard | LigaturesFlags.Historical,
+		ContextualHistorical             : LigaturesFlags.Contextual | LigaturesFlags.Historical,
+		StandardDiscretional             : LigaturesFlags.Standard | LigaturesFlags.Discretional,
+		ContextualDiscretional           : LigaturesFlags.Contextual | LigaturesFlags.Discretional,
+		HistoricalDiscretional           : LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		StandardContextualHistorical     : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Historical,
+		StandardContextualDiscretional   : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Discretional,
+		StandardHistoricalDiscretional   : LigaturesFlags.Standard | LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		ContextualHistoricalDiscretional : LigaturesFlags.Contextual | LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		All                              : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Historical | LigaturesFlags.Discretional
+	};
+
+	const CombFormWidthRule = {
+		AtLeast : 0,
+		Auto    : 1,
+		Exact   : 2
+	};
+
+	const UnderlineType = {
+		Dash            : 0,
+		DashDotDotHeavy : 1,
+		DashDotHeavy    : 2,
+		DashedHeavy     : 3,
+		DashLong        : 4,
+		DashLongHeavy   : 5,
+		DotDash         : 6,
+		DotDotDash      : 7,
+		Dotted          : 8,
+		DottedHeavy     : 9,
+		Double          : 10,
+		None            : 11,
+		Single          : 12,
+		Thick           : 13,
+		Wave            : 14,
+		WavyDouble      : 15,
+		WavyHeavy       : 16,
+		Words           : 17
+	};
+
+	const DocumentView = {
+		MasterPages : 0,
+		None        : 1,
+		Normal      : 2,
+		Outline     : 3,
+		Print       : 4,
+		Web         : 5
 	};
 
 	//------------------------------------------------------------export--------------------------------------------------
@@ -4135,7 +4211,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot["cellanchorOneCell"] = prot.cellanchorOneCell;
 	prot["cellanchorTwoCell"] = prot.cellanchorTwoCell;
 
-    window['AscCommon']                             = window['AscCommon'] || {};
+	prot = window['Asc'];
+	prot["vertalign_Baseline"]    = vertalign_Baseline;
+	prot["vertalign_SuperScript"] = vertalign_SuperScript;
+	prot["vertalign_SubScript"]   = vertalign_SubScript;
+
+	window['AscCommon']                             = window['AscCommon'] || {};
 	window["AscCommon"].g_cCharDelimiter            = g_cCharDelimiter;
 	window["AscCommon"].g_cGeneralFormat            = g_cGeneralFormat;
 	window["AscCommon"].bDate1904                   = false;
@@ -4182,6 +4263,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].c_oAscMaxFormulaReferenceLength = c_oAscMaxFormulaReferenceLength;
 	window["AscCommon"].c_oAscMaxTableColumnTextLength = c_oAscMaxTableColumnTextLength;
 
+	prot =  window["AscCommon"]["c_oAscUrlType"] = window["AscCommon"].c_oAscUrlType = c_oAscUrlType;
+	prot["Invalid"] = prot.Invalid;
+	prot["Http"] = prot.Http;
+	prot["Email"] = prot.Email;
+	prot["Unsafe"] = prot.Unsafe;
 
 	window["AscCommon"].locktype_None   = locktype_None;
 	window["AscCommon"].locktype_Mine   = locktype_Mine;
@@ -4224,6 +4310,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].changestype_SlideHide                 = changestype_SlideHide;
 	window["AscCommon"].changestype_CorePr                    = changestype_CorePr;
 	window["AscCommon"].changestype_Document_Settings         = changestype_Document_Settings;
+	window["AscCommon"].changestype_Timing                    = changestype_Timing;
 
 	window["AscCommon"].changestype_2_InlineObjectMove        = changestype_2_InlineObjectMove;
 	window["AscCommon"].changestype_2_HdrFtr                  = changestype_2_HdrFtr;
@@ -4299,20 +4386,84 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 
 	window['Asc']['c_oAscNumberingFormat'] = window['Asc'].c_oAscNumberingFormat = c_oAscNumberingFormat;
 	prot = c_oAscNumberingFormat;
-	prot['None']                    = prot.None;
-	prot['Bullet']                  = prot.Bullet;
-	prot['Decimal']                 = prot.Decimal;
-	prot['LowerRoman']              = prot.LowerRoman;
-	prot['UpperRoman']              = prot.UpperRoman;
-	prot['LowerLetter']             = prot.LowerLetter;
-	prot['UpperLetter']             = prot.UpperLetter;
-	prot['DecimalZero']             = prot.DecimalZero;
-	prot['DecimalEnclosedCircle']   = prot.DecimalEnclosedCircle;
-	prot['RussianLower']            = prot.RussianLower;
-	prot['RussianUpper']            = prot.RussianUpper;
-	prot['ChineseCounting']         = prot.ChineseCounting;
-	prot['ChineseCountingThousand'] = prot.ChineseCountingThousand;
-	prot['ChineseLegalSimplified']  = prot.ChineseLegalSimplified;
+	prot['Aiueo']                        = prot.Aiueo;
+	prot['AiueoFullWidth']               = prot.AiueoFullWidth;
+	prot['ArabicAbjad']                  = prot.ArabicAbjad;
+	prot['ArabicAlpha']                  = prot.ArabicAlpha;
+	prot['BahtText']                     = prot.BahtText;
+	prot['Bullet']                       = prot.Bullet;
+	prot['CardinalText']                 = prot.CardinalText;
+	prot['Chicago']                      = prot.Chicago;
+	prot['ChineseCounting']              = prot.ChineseCounting;
+	prot['ChineseCountingThousand']      = prot.ChineseCountingThousand;
+	prot['ChineseLegalSimplified']       = prot.ChineseLegalSimplified;
+	prot['Chosung']                      = prot.Chosung;
+	prot['Custom']                       = prot.Custom;
+	prot['Decimal']                      = prot.Decimal;
+	prot['DecimalEnclosedCircle']        = prot.DecimalEnclosedCircle;
+	prot['DecimalEnclosedCircleChinese'] = prot.DecimalEnclosedCircleChinese;
+	prot['DecimalEnclosedFullstop']      = prot.DecimalEnclosedFullstop;
+	prot['DecimalEnclosedParen']         = prot.DecimalEnclosedParen;
+	prot['DecimalFullWidth']             = prot.DecimalFullWidth;
+	prot['DecimalFullWidth2']            = prot.DecimalFullWidth2;
+	prot['DecimalHalfWidth']             = prot.DecimalHalfWidth;
+	prot['DecimalZero']                  = prot.DecimalZero;
+	prot['DollarText']                   = prot.DollarText;
+	prot['Ganada']                       = prot.Ganada;
+	prot['Hebrew1']                      = prot.Hebrew1;
+	prot['Hebrew2']                      = prot.Hebrew2;
+	prot['Hex']                          = prot.Hex;
+	prot['HindiConsonants']              = prot.HindiConsonants;
+	prot['HindiCounting']                = prot.HindiCounting;
+	prot['HindiNumbers']                 = prot.HindiNumbers;
+	prot['HindiVowels']                  = prot.HindiVowels;
+	prot['IdeographDigital']             = prot.IdeographDigital;
+	prot['IdeographEnclosedCircle']      = prot.IdeographEnclosedCircle;
+	prot['IdeographLegalTraditional']    = prot.IdeographLegalTraditional;
+	prot['IdeographTraditional']         = prot.IdeographTraditional;
+	prot['IdeographZodiac']              = prot.IdeographZodiac;
+	prot['IdeographZodiacTraditional']   = prot.IdeographZodiacTraditional;
+	prot['Iroha']                        = prot.Iroha;
+	prot['IrohaFullWidth']               = prot.IrohaFullWidth;
+	prot['JapaneseCounting']             = prot.JapaneseCounting;
+	prot['JapaneseDigitalTenThousand']   = prot.JapaneseDigitalTenThousand;
+	prot['JapaneseLegal']                = prot.JapaneseLegal;
+	prot['KoreanCounting']               = prot.KoreanCounting;
+	prot['KoreanDigital']                = prot.KoreanDigital;
+	prot['KoreanDigital2']               = prot.KoreanDigital2;
+	prot['KoreanLegal']                  = prot.KoreanLegal;
+	prot['LowerLetter']                  = prot.LowerLetter;
+	prot['LowerRoman']                   = prot.LowerRoman;
+	prot['None']                         = prot.None;
+	prot['NumberInDash']                 = prot.NumberInDash;
+	prot['Ordinal']                      = prot.Ordinal;
+	prot['OrdinalText']                  = prot.OrdinalText;
+	prot['RussianLower']                 = prot.RussianLower;
+	prot['RussianUpper']                 = prot.RussianUpper;
+	prot['TaiwaneseCounting']            = prot.TaiwaneseCounting;
+	prot['TaiwaneseCountingThousand']    = prot.TaiwaneseCountingThousand;
+	prot['TaiwaneseDigital']             = prot.TaiwaneseDigital;
+	prot['ThaiCounting']                 = prot.ThaiCounting;
+	prot['ThaiLetters']                  = prot.ThaiLetters;
+	prot['ThaiNumbers']                  = prot.ThaiNumbers;
+	prot['UpperLetter']                  = prot.UpperLetter;
+	prot['UpperRoman']                   = prot.UpperRoman;
+	prot['VietnameseCounting']           = prot.VietnameseCounting;
+
+	// new presentation types
+	prot['Ea1JpnKor']                    = prot.Ea1JpnKor;
+	prot['CircleNumWdBlack']             = prot.CircleNumWdBlack;
+	prot['Ea1JpnChsDb']                  = prot.Ea1JpnChsDb;
+	prot['Ea1Cht']                       = prot.Ea1Cht;
+	prot['CircleNumWdWhitePlain']        = prot.CircleNumWdWhitePlain;
+
+	//custom types
+	prot['CustomGreece']                 = prot.CustomGreece;
+	prot['CustomDecimalFourZero']        = prot.CustomDecimalFourZero;
+	prot['CustomDecimalThreeZero']       = prot.CustomDecimalThreeZero;
+	prot['CustomDecimalTwoZero']         = prot.CustomDecimalTwoZero;
+
+	window['Asc']['c_oAscCustomNumberingFormatAssociation'] = window['Asc'].c_oAscCustomNumberingFormatAssociation = c_oAscCustomNumberingFormatAssociation;
 
 	window['Asc']['c_oAscNumberingSuff'] = window['Asc'].c_oAscNumberingSuff = c_oAscNumberingSuff;
 	prot = c_oAscNumberingSuff;
@@ -4509,7 +4660,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
     window['AscFormat'].BULLET_TYPE_BULLET_NONE = window['AscFormat']['BULLET_TYPE_BULLET_NONE'] = 0;
     window['AscFormat'].BULLET_TYPE_BULLET_CHAR = window['AscFormat']['BULLET_TYPE_BULLET_CHAR'] = 1;
     window['AscFormat'].BULLET_TYPE_BULLET_AUTONUM = window['AscFormat']['BULLET_TYPE_BULLET_AUTONUM'] = 2;
-    window['AscFormat'].BULLET_TYPE_BULLET_BLIP = window['AscFormat']['BULLET_TYPE_BULLET_BLIP'] = 3;	window['AscCommon'].c_oAscRectAlignType = c_oAscRectAlignType;
+    window['AscFormat'].BULLET_TYPE_BULLET_BLIP = window['AscFormat']['BULLET_TYPE_BULLET_BLIP'] = 3;
+	window['AscCommon'].c_oAscRectAlignType = c_oAscRectAlignType;
 	window['AscCommon'].ST_HueDir = ST_HueDir;
 	window['AscCommon'].ST_ClrAppMethod = ST_ClrAppMethod;
 	window['AscCommon'].ST_AnimLvlStr = ST_AnimLvlStr;
@@ -4538,5 +4690,56 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window['AscCommon'].ST_TLAnimateEffectTransition = ST_TLAnimateEffectTransition;
 	window['AscCommon'].c_oAscOleObjectTypes = c_oAscOleObjectTypes;
 	window['AscCommon'].ST_CxnType = ST_CxnType;
-	
-	})(window);
+
+	prot = window['Asc']['LigaturesType'] = window['Asc'].LigaturesType = LigaturesType;
+	prot['None']                             = prot.None;
+	prot['Standard']                         = prot.Standard;
+	prot['Contextual']                       = prot.Contextual;
+	prot['Historical']                       = prot.Historical;
+	prot['Discretional']                     = prot.Discretional;
+	prot['StandardContextual']               = prot.StandardContextual;
+	prot['StandardHistorical']               = prot.StandardHistorical;
+	prot['ContextualHistorical']             = prot.ContextualHistorical;
+	prot['StandardDiscretional']             = prot.StandardDiscretional;
+	prot['ContextualDiscretional']           = prot.ContextualDiscretional;
+	prot['HistoricalDiscretional']           = prot.HistoricalDiscretional;
+	prot['StandardContextualHistorical']     = prot.StandardContextualHistorical;
+	prot['StandardContextualDiscretional']   = prot.StandardContextualDiscretional;
+	prot['StandardHistoricalDiscretional']   = prot.StandardHistoricalDiscretional;
+	prot['ContextualHistoricalDiscretional'] = prot.ContextualHistoricalDiscretional;
+	prot['All']                              = prot.All;
+
+	prot = window['Asc']['CombFormWidthRule'] = window['Asc'].CombFormWidthRule = CombFormWidthRule;
+	prot['Auto']    = prot.Auto;
+	prot['AtLeast'] = prot.AtLeast;
+	prot['Exact']   = prot.Exact;
+
+	prot = window['Asc']['UnderlineType'] = window['Asc'].UnderlineType = UnderlineType;
+	prot['Dash']            = prot.Dash;
+	prot['DashDotDotHeavy'] = prot.DashDotDotHeavy;
+	prot['DashDotHeavy']    = prot.DashDotHeavy;
+	prot['DashedHeavy']     = prot.DashedHeavy;
+	prot['DashLong']        = prot.DashLong;
+	prot['DashLongHeavy']   = prot.DashLongHeavy;
+	prot['DotDash']         = prot.DotDash;
+	prot['DotDotDash']      = prot.DotDotDash;
+	prot['Dotted']          = prot.Dotted;
+	prot['DottedHeavy']     = prot.DottedHeavy;
+	prot['Double']          = prot.Double;
+	prot['None']            = prot.None;
+	prot['Single']          = prot.Single;
+	prot['Thick']           = prot.Thick;
+	prot['Wave']            = prot.Wave;
+	prot['WavyDouble']      = prot.WavyDouble;
+	prot['WavyHeavy']       = prot.WavyHeavy;
+	prot['Words']           = prot.Words;
+
+	prot = window['Asc']['DocumentView'] = window['Asc'].DocumentView = DocumentView;
+	prot['MasterPages'] = prot.MasterPages;
+	prot['None']        = prot.None;
+	prot['Normal']      = prot.Normal;
+	prot['Outline']     = prot.Outline;
+	prot['Print']       = prot.Print;
+	prot['Web']         = prot.Web;
+
+})(window);

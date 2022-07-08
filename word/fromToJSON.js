@@ -4892,18 +4892,13 @@
 				return oParaNewLine;
 				
 			var sBreakType = "";
-			switch (oParaNewLine.BreakType)
-			{
-				case AscCommonWord.break_Line:
-					sBreakType = "textWrapping";
-					break;
-				case AscCommonWord.break_Page:
-					sBreakType = "page";
-					break;
-				case AscCommonWord.break_Column:
-					sBreakType = "column";
-					break;
-			}
+			if (oParaNewLine.IsLineBreak())
+				sBreakType = "textWrapping";
+			else if (oParaNewLine.IsPageBreak())
+				sBreakType = "page";
+			else if (oParaNewLine.IsColumnBreak())
+				sBreakType = "column";
+
 			return {
 				type: "break",
 				breakType: sBreakType
@@ -6856,127 +6851,127 @@
 			var sAutoNumType = undefined;
 			switch (oBulletType.AutoNumType)
 			{
-				case numbering_presentationnumfrmt_AlphaLcParenBoth:
+				case AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth:
 					sAutoNumType = "alphaLcParenBoth";
 					break;
-				case numbering_presentationnumfrmt_AlphaLcParenR:
+				case AscFormat.numbering_presentationnumfrmt_AlphaLcParenR:
 					sAutoNumType = "alphaLcParenR";
 					break;
-				case numbering_presentationnumfrmt_AlphaLcPeriod:
+				case AscFormat.numbering_presentationnumfrmt_AlphaLcPeriod:
 					sAutoNumType = "alphaLcPeriod";
 					break;
-				case numbering_presentationnumfrmt_AlphaUcParenBoth:
+				case AscFormat.numbering_presentationnumfrmt_AlphaUcParenBoth:
 					sAutoNumType = "alphaUcParenBoth";
 					break;
-				case numbering_presentationnumfrmt_AlphaUcParenR:
+				case AscFormat.numbering_presentationnumfrmt_AlphaUcParenR:
 					sAutoNumType = "alphaUcParenR";
 					break;
-				case numbering_presentationnumfrmt_AlphaUcPeriod:
+				case AscFormat.numbering_presentationnumfrmt_AlphaUcPeriod:
 					sAutoNumType = "alphaUcPeriod";
 					break;
-				case numbering_presentationnumfrmt_Arabic1Minus:
+				case AscFormat.numbering_presentationnumfrmt_Arabic1Minus:
 					sAutoNumType = "arabic1Minus";
 					break;
-				case numbering_presentationnumfrmt_Arabic2Minus:
+				case AscFormat.numbering_presentationnumfrmt_Arabic2Minus:
 					sAutoNumType = "arabic2Minus";
 					break;
-				case numbering_presentationnumfrmt_ArabicDbPeriod:
+				case AscFormat.numbering_presentationnumfrmt_ArabicDbPeriod:
 					sAutoNumType = "arabicDbPeriod";
 					break;
-				case numbering_presentationnumfrmt_ArabicDbPlain:
+				case AscFormat.numbering_presentationnumfrmt_ArabicDbPlain:
 					sAutoNumType = "arabicDbPlain";
 					break;
-				case numbering_presentationnumfrmt_ArabicParenBoth:
+				case AscFormat.numbering_presentationnumfrmt_ArabicParenBoth:
 					sAutoNumType = "arabicParenBoth";
 					break;
-				case numbering_presentationnumfrmt_ArabicParenR:
+				case AscFormat.numbering_presentationnumfrmt_ArabicParenR:
 					sAutoNumType = "arabicParenR";
 					break;
-				case numbering_presentationnumfrmt_ArabicPeriod:
+				case AscFormat.numbering_presentationnumfrmt_ArabicPeriod:
 					sAutoNumType = "arabicPeriod";
 					break;
-				case numbering_presentationnumfrmt_ArabicPlain:
+				case AscFormat.numbering_presentationnumfrmt_ArabicPlain:
 					sAutoNumType = "arabicPlain";
 					break;
-				case numbering_presentationnumfrmt_CircleNumDbPlain:
+				case AscFormat.numbering_presentationnumfrmt_CircleNumDbPlain:
 					sAutoNumType = "circleNumDbPlain";
 					break;
-				case numbering_presentationnumfrmt_CircleNumWdBlackPlain:
+				case AscFormat.numbering_presentationnumfrmt_CircleNumWdBlackPlain:
 					sAutoNumType = "circleNumWdBlackPlain";
 					break;
-				case numbering_presentationnumfrmt_CircleNumWdWhitePlain:
+				case AscFormat.numbering_presentationnumfrmt_CircleNumWdWhitePlain:
 					sAutoNumType = "circleNumWdWhitePlain";
 					break;
-				case numbering_presentationnumfrmt_Ea1ChsPeriod:
+				case AscFormat.numbering_presentationnumfrmt_Ea1ChsPeriod:
 					sAutoNumType = "ea1ChsPeriod";
 					break;
-				case numbering_presentationnumfrmt_Ea1ChsPlain:
+				case AscFormat.numbering_presentationnumfrmt_Ea1ChsPlain:
 					sAutoNumType = "ea1ChsPlain";
 					break;
-				case numbering_presentationnumfrmt_Ea1ChtPeriod:
+				case AscFormat.numbering_presentationnumfrmt_Ea1ChtPeriod:
 					sAutoNumType = "ea1ChtPeriod";
 					break;
-				case numbering_presentationnumfrmt_Ea1ChtPlain:
+				case AscFormat.numbering_presentationnumfrmt_Ea1ChtPlain:
 					sAutoNumType = "ea1ChtPlain";
 					break;
-				case numbering_presentationnumfrmt_Ea1JpnChsDbPeriod:
+				case AscFormat.numbering_presentationnumfrmt_Ea1JpnChsDbPeriod:
 					sAutoNumType = "ea1JpnChsDbPeriod";
 					break;
-				case numbering_presentationnumfrmt_Ea1JpnKorPeriod:
+				case AscFormat.numbering_presentationnumfrmt_Ea1JpnKorPeriod:
 					sAutoNumType = "ea1JpnKorPeriod";
 					break;
-				case numbering_presentationnumfrmt_Ea1JpnKorPlain:
+				case AscFormat.numbering_presentationnumfrmt_Ea1JpnKorPlain:
 					sAutoNumType = "ea1JpnKorPlain";
 					break;
-				case numbering_presentationnumfrmt_Hebrew2Minus:
+				case AscFormat.numbering_presentationnumfrmt_Hebrew2Minus:
 					sAutoNumType = "hebrew2Minus";
 					break;
-				case numbering_presentationnumfrmt_HindiAlpha1Period:
+				case AscFormat.numbering_presentationnumfrmt_HindiAlpha1Period:
 					sAutoNumType = "hindiAlpha1Period";
 					break;
-				case numbering_presentationnumfrmt_HindiAlphaPeriod:
+				case AscFormat.numbering_presentationnumfrmt_HindiAlphaPeriod:
 					sAutoNumType = "hindiAlphaPeriod";
 					break;
-				case numbering_presentationnumfrmt_HindiNumParenR:
+				case AscFormat.numbering_presentationnumfrmt_HindiNumParenR:
 					sAutoNumType = "hindiNumParenR";
 					break;
-				case numbering_presentationnumfrmt_HindiNumPeriod:
+				case AscFormat.numbering_presentationnumfrmt_HindiNumPeriod:
 					sAutoNumType = "hindiNumPeriod";
 					break;
-				case numbering_presentationnumfrmt_RomanLcParenBoth:
+				case AscFormat.numbering_presentationnumfrmt_RomanLcParenBoth:
 					sAutoNumType = "romanLcParenBoth";
 					break;
-				case numbering_presentationnumfrmt_RomanLcParenR:
+				case AscFormat.numbering_presentationnumfrmt_RomanLcParenR:
 					sAutoNumType = "romanLcParenR";
 					break;
-				case numbering_presentationnumfrmt_RomanLcPeriod:
+				case AscFormat.numbering_presentationnumfrmt_RomanLcPeriod:
 					sAutoNumType = "romanLcPeriod";
 					break;
-				case numbering_presentationnumfrmt_RomanUcParenBoth:
+				case AscFormat.numbering_presentationnumfrmt_RomanUcParenBoth:
 					sAutoNumType = "romanUcParenBoth";
 					break;
-				case numbering_presentationnumfrmt_RomanUcParenR:
+				case AscFormat.numbering_presentationnumfrmt_RomanUcParenR:
 					sAutoNumType = "romanUcParenR";
 					break;
-				case numbering_presentationnumfrmt_RomanUcPeriod:
+				case AscFormat.numbering_presentationnumfrmt_RomanUcPeriod:
 					sAutoNumType = "romanUcPeriod";
 					break;
-				case numbering_presentationnumfrmt_ThaiAlphaParenBoth:
+				case AscFormat.numbering_presentationnumfrmt_ThaiAlphaParenBoth:
 					sAutoNumType = "thaiAlphaParenBoth";
 					break;
-				case numbering_presentationnumfrmt_ThaiAlphaParenR:
+				case AscFormat.numbering_presentationnumfrmt_ThaiAlphaParenR:
 					sAutoNumType = "thaiAlphaParenR";
 					break;
-				case numbering_presentationnumfrmt_ThaiAlphaPeriod:
+				case AscFormat.numbering_presentationnumfrmt_ThaiAlphaPeriod:
 					sAutoNumType = "thaiAlphaPeriod";
 					break;
-				case numbering_presentationnumfrmt_ThaiNumParenBoth:
+				case AscFormat.numbering_presentationnumfrmt_ThaiNumParenBoth:
 					sAutoNumType = "thaiNumParenBoth";
 					break;
-				case numbering_presentationnumfrmt_ThaiNumParenR:
+				case AscFormat.numbering_presentationnumfrmt_ThaiNumParenR:
 					sAutoNumType = "thaiNumParenR";
 					break;
-				case numbering_presentationnumfrmt_ThaiNumPeriod:
+				case AscFormat.numbering_presentationnumfrmt_ThaiNumPeriod:
 					sAutoNumType = "thaiNumPeriod";
 					break;
 			}
@@ -8263,7 +8258,7 @@
 
 		if (oParsedRun.type === "endRun")
 		{
-			oRun.Add_ToContent( 0, new ParaEnd() );
+			oRun.Add_ToContent( 0, new AscWord.CRunParagraphMark() );
 			return oRun;
 		}
 
@@ -8320,21 +8315,21 @@
 					switch(aContent[nElm].breakType)
 					{
 						case "textWrapping":
-							oRun.AddToContent(-1, new AscCommonWord.ParaNewLine(AscCommonWord.break_Line));
+							oRun.AddToContent(-1, new AscWord.CRunBreak(AscWord.break_Line));
 							break;
 						case "page":
-							oRun.AddToContent(-1, new AscCommonWord.ParaNewLine(AscCommonWord.break_Page));
+							oRun.AddToContent(-1, new AscWord.CRunBreak(AscWord.break_Page));
 							break;
 						case "column":
-							oRun.AddToContent(-1, new AscCommonWord.ParaNewLine(AscCommonWord.break_Column));
+							oRun.AddToContent(-1, new AscWord.CRunBreak(AscWord.break_Column));
 							break;
 					}
 					break;
 				case "pgNum":
-					oRun.AddToContent(-1, new ParaPageNum());
+					oRun.AddToContent(-1, new AscWord.CRunPageNum());
 					break;
 				case "tab":
-					oRun.AddToContent(-1, new ParaTab());
+					oRun.AddToContent(-1, new AscWord.CRunTab());
 					break;
 				case "fldChar":
 					switch (aContent[nElm].fldCharType)
@@ -8381,7 +8376,7 @@
 						this.MoveMap[aContent[nElm].name] = sMoveName;
 					}
 
-					var oRevisionMove = new CRunRevisionMove(aContent[nElm].start, aContent[nElm].from, this.MoveMap[aContent[nElm].name], aContent[nElm].reviewInfo);
+					var oRevisionMove = new AscWord.CRunRevisionMove(aContent[nElm].start, aContent[nElm].from, this.MoveMap[aContent[nElm].name], aContent[nElm].reviewInfo);
 					oRun.Add_ToContent(-1, oRevisionMove);
 					break;
 				case "footnoteRef":
@@ -8401,16 +8396,16 @@
 		switch (oParsedFootEndnoteRef.type)
 		{
 			case "footnoteRef":
-				oFootEndnoteRef = new ParaFootnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
+				oFootEndnoteRef = new AscWord.CRunFootnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
 				break;
 			case "footnoteNum":
-				oFootEndnoteRef = new ParaFootnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
+				oFootEndnoteRef = new AscWord.CRunFootnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
 				break;
 			case "endnoteRef":
-				oFootEndnoteRef = new ParaEndnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
+				oFootEndnoteRef = new AscWord.CRunEndnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
 				break;
 			case "endnoteNum":
-				oFootEndnoteRef = new ParaEndnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
+				oFootEndnoteRef = new AscWord.CRunEndnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
 				break;
 		}
 		
@@ -8912,127 +8907,127 @@
 			switch (oParsedBulletType.AutoNumType)
 			{
 				case "alphaLcParenBoth":
-					nAutoNumType = numbering_presentationnumfrmt_AlphaLcParenBoth;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth;
 					break;
 				case "alphaLcParenR":
-					nAutoNumType = numbering_presentationnumfrmt_AlphaLcParenR;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcParenR;
 					break;
 				case "alphaLcPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_AlphaLcPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcPeriod;
 					break;
 				case "alphaUcParenBoth":
-					nAutoNumType = numbering_presentationnumfrmt_AlphaUcParenBoth;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaUcParenBoth;
 					break;
 				case "alphaUcParenR":
-					nAutoNumType = numbering_presentationnumfrmt_AlphaUcParenR;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaUcParenR;
 					break;
 				case "alphaUcPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_AlphaUcPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaUcPeriod;
 					break;
 				case "arabic1Minus":
-					nAutoNumType = numbering_presentationnumfrmt_Arabic1Minus;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_Arabic1Minus;
 					break;
 				case "arabic2Minus":
-					nAutoNumType = numbering_presentationnumfrmt_Arabic2Minus;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_Arabic2Minus;
 					break;
 				case "arabicDbPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_ArabicDbPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ArabicDbPeriod;
 					break;
 				case "arabicDbPlain":
-					nAutoNumType = numbering_presentationnumfrmt_ArabicDbPlain;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ArabicDbPlain;
 					break;
 				case "arabicParenBoth":
-					nAutoNumType = numbering_presentationnumfrmt_ArabicParenBoth;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ArabicParenBoth;
 					break;
 				case "arabicParenR":
-					nAutoNumType = numbering_presentationnumfrmt_ArabicParenR;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ArabicParenR;
 					break;
 				case "arabicPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_ArabicPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ArabicPeriod;
 					break;
 				case "arabicPlain":
-					nAutoNumType = numbering_presentationnumfrmt_ArabicPlain;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ArabicPlain;
 					break;
 				case "circleNumDbPlain":
-					nAutoNumType = numbering_presentationnumfrmt_CircleNumDbPlain;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_CircleNumDbPlain;
 					break;
 				case "circleNumWdBlackPlain":
-					nAutoNumType = numbering_presentationnumfrmt_CircleNumWdBlackPlain;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_CircleNumWdBlackPlain;
 					break;
 				case "circleNumWdWhitePlain":
-					nAutoNumType = numbering_presentationnumfrmt_CircleNumWdWhitePlain;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_CircleNumWdWhitePlain;
 					break;
 				case "ea1ChsPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_Ea1ChsPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_Ea1ChsPeriod;
 					break;
 				case "ea1ChsPlain":
-					nAutoNumType = numbering_presentationnumfrmt_Ea1ChsPlain;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_Ea1ChsPlain;
 					break;
 				case "ea1ChtPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_Ea1ChtPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_Ea1ChtPeriod;
 					break;
 				case "ea1ChtPlain":
-					nAutoNumType = numbering_presentationnumfrmt_Ea1ChtPlain;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_Ea1ChtPlain;
 					break;
 				case "ea1JpnChsDbPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_Ea1JpnChsDbPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_Ea1JpnChsDbPeriod;
 					break;
 				case "ea1JpnKorPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_Ea1JpnKorPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_Ea1JpnKorPeriod;
 					break;
 				case "ea1JpnKorPlain":
-					nAutoNumType = numbering_presentationnumfrmt_Ea1JpnKorPlain;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_Ea1JpnKorPlain;
 					break;
 				case "hebrew2Minus":
-					nAutoNumType = numbering_presentationnumfrmt_Hebrew2Minus;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_Hebrew2Minus;
 					break;
 				case "hindiAlpha1Period":
-					nAutoNumType = numbering_presentationnumfrmt_HindiAlpha1Period;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_HindiAlpha1Period;
 					break;
 				case "hindiAlphaPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_HindiAlphaPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_HindiAlphaPeriod;
 					break;
 				case "hindiNumParenR":
-					nAutoNumType = numbering_presentationnumfrmt_HindiNumParenR;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_HindiNumParenR;
 					break;
 				case "hindiNumPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_HindiNumPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_HindiNumPeriod;
 					break;
 				case "romanLcParenBoth":
-					nAutoNumType = numbering_presentationnumfrmt_RomanLcParenBoth;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_RomanLcParenBoth;
 					break;
 				case "romanLcParenR":
-					nAutoNumType = numbering_presentationnumfrmt_RomanLcParenR;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_RomanLcParenR;
 					break;
 				case "romanLcPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_RomanLcPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_RomanLcPeriod;
 					break;
 				case "romanUcParenBoth":
-					nAutoNumType = numbering_presentationnumfrmt_RomanUcParenBoth;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_RomanUcParenBoth;
 					break;
 				case "romanUcParenR":
-					nAutoNumType = numbering_presentationnumfrmt_RomanUcParenR;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_RomanUcParenR;
 					break;
 				case "romanUcPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_RomanUcPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_RomanUcPeriod;
 					break;
 				case "thaiAlphaParenBoth":
-					nAutoNumType = numbering_presentationnumfrmt_ThaiAlphaParenBoth;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ThaiAlphaParenBoth;
 					break;
 				case "thaiAlphaParenR":
-					nAutoNumType = numbering_presentationnumfrmt_ThaiAlphaParenR;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ThaiAlphaParenR;
 					break;
 				case "thaiAlphaPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_ThaiAlphaPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ThaiAlphaPeriod;
 					break;
 				case "thaiNumParenBoth":
-					nAutoNumType = numbering_presentationnumfrmt_ThaiNumParenBoth;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ThaiNumParenBoth;
 					break;
 				case "thaiNumParenR":
-					nAutoNumType = numbering_presentationnumfrmt_ThaiNumParenR;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ThaiNumParenR;
 					break;
 				case "thaiNumPeriod":
-					nAutoNumType = numbering_presentationnumfrmt_ThaiNumPeriod;
+					nAutoNumType = AscFormat.numbering_presentationnumfrmt_ThaiNumPeriod;
 					break;
 			}
 
@@ -11003,13 +10998,13 @@
 		// comboboxPr
 		if (oParsedSdtPr.comboBox)
 		{
-			var oComboboxPr   = new AscCommon.CSdtComboBoxPr();
+			var oComboboxPr   = new AscWord.CSdtComboBoxPr();
 			oTempListItem = null;
 
 			oComboboxPr.LastValue = oParsedSdtPr.comboBox.lastValue;
 			for (var nItem = 0; nItem < oParsedSdtPr.comboBox.listItem.length; nItem++)
 			{
-				oTempListItem             = new CSdtListItem();
+				oTempListItem             = new AscWord.CSdtListItem();
 				oTempListItem.DisplayText = oParsedSdtPr.comboBox.listItem[nItem].displayText;
 				oTempListItem.Value       = oParsedSdtPr.comboBox.listItem[nItem].value;
 				
@@ -11022,7 +11017,7 @@
 		// date
 		if (oParsedSdtPr.date)
 		{
-			var oDate = new AscCommon.CSdtDatePickerPr();
+			var oDate = new AscWord.CSdtDatePickerPr();
 
 			oDate.FullDate   = oParsedSdtPr.date.fullDate;
 			oDate.LangId     = oParsedSdtPr.date.lid;
@@ -11040,13 +11035,13 @@
 		// dropdown
 		if (oParsedSdtPr.comboBox)
 		{
-			var oDropDownPr   = new AscCommon.CSdtComboBoxPr();
+			var oDropDownPr   = new AscWord.CSdtComboBoxPr();
 			oTempListItem = null;
 
 			oDropDownPr.LastValue = oParsedSdtPr.dropDownList.lastValue;
 			for (var nItem = 0; nItem < oParsedSdtPr.dropDownList.listItem.length; nItem++)
 			{
-				oTempListItem             = new CSdtListItem();
+				oTempListItem             = new AscWord.CSdtListItem();
 				oTempListItem.DisplayText = oParsedSdtPr.dropDownList.listItem[nItem].displayText;
 				oTempListItem.Value       = oParsedSdtPr.dropDownList.listItem[nItem].value;
 				

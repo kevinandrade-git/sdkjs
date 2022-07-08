@@ -356,21 +356,23 @@
             }
             this.overlayGeometry.pathLst.length = 1;
             var oDrawPath = this.overlayGeometry.pathLst[0];
-            oDrawPath.ArrPathCommand.length = 0;
-            oDrawPath.stroke = true;
-            if(prevPoint) {
-                oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: prevPoint.X, Y: prevPoint.Y});
-                if(arrPathCommand[gmEditPoint.pathC1]) {
-                    oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC1]);
+            if(oDrawPath) {
+                oDrawPath.ArrPathCommand.length = 0;
+                oDrawPath.stroke = true;
+                if(prevPoint) {
+                    oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: prevPoint.X, Y: prevPoint.Y});
+                    if(arrPathCommand[gmEditPoint.pathC1]) {
+                        oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC1]);
+                    }
+                    if(arrPathCommand[gmEditPoint.pathC2]) {
+                        oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
+                    }
                 }
-                if(arrPathCommand[gmEditPoint.pathC2]) {
-                    oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
-                }
-            }
-            else {
-                oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: gmEditPoint.X, Y: gmEditPoint.Y});
-                if(arrPathCommand[gmEditPoint.pathC2]) {
-                    oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
+                else {
+                    oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: gmEditPoint.X, Y: gmEditPoint.Y});
+                    if(arrPathCommand[gmEditPoint.pathC2]) {
+                        oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
+                    }
                 }
             }
         }, this, []);
@@ -503,10 +505,20 @@
         var dExtY = this.yMax - this.yMin;
         var oSpPr = this.originalObject.spPr;
         var oXfrm = oSpPr.xfrm;
+        oXfrm.setExtX(dExtX);
+        oXfrm.setExtY(dExtY);
+        oXfrm.setRot(0);
         var oOffset;
-        if(this.originalObject.animMotionTrack) {
+        //set new position
+        if(bWord && !this.originalObject.group) {
+            oXfrm.setOffX(0);
+            oXfrm.setOffY(0);
+        }
+		else if(this.originalObject.animMotionTrack) {
             oOffset = this.getXfrmOffset();
             this.originalObject.updateAnimation(oOffset.OffX, oOffset.OffY, dExtX, dExtY, 0, this.geometry)
+
+
         }
         else {
             oXfrm.setExtX(dExtX);

@@ -112,11 +112,11 @@
 	 */
 	CRunAutoCorrect.prototype.DoAutoCorrect = function(nFlags, nHistoryActions)
 	{
-		this.Flags          = nFlags;
+		this.Flags          = this.private_CheckFlags(nFlags);
 		this.Result         = AUTOCORRECT_FLAGS_NONE;
 		this.HistoryActions = (undefined === nHistoryActions || null === nHistoryActions) ? 1 : nHistoryActions;
 
-		if (!this.IsValid() || !nFlags)
+		if (!this.IsValid() || !this.Flags)
 			return this.Result;
 
 		// Чтобы позиция ContentPos была актуальна, отключаем корректировку содержимого параграфа на время выполнения
@@ -153,6 +153,15 @@
 			return this.private_Return();
 
 		return this.private_Return();
+	};
+	CRunAutoCorrect.prototype.private_CheckFlags = function(nFlags)
+	{
+		// Если автозамены будем включать в формах при каких-либо условиях, тогда нужно проверять, что
+		// выполнение автозамены не выходит за пределы формы
+		if (this.Run.GetParentForm())
+			return AUTOCORRECT_FLAGS_NONE;
+
+		return nFlags;
 	};
 	CRunAutoCorrect.prototype.private_Return = function()
 	{
@@ -276,7 +285,7 @@
 
 		oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectHyphensWithDash);
 
-		var oDot = new ParaText(46);
+		var oDot = new AscWord.CRunText(46);
 		oRun.AddToContent(this.Pos, oDot);
 		oParagraph.RemoveRunElement(oRunElementsBefore.GetContentPositions()[0]);
 
@@ -335,7 +344,7 @@
 
 		oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectCommon);
 
-		oRun.AddToContent(this.Pos, new ParaText(0x00A0));
+		oRun.AddToContent(this.Pos, new AscWord.CRunText(0x00A0));
 		oRun.State.ContentPos = this.Pos + 2;
 
 		if (arrElements.length >= 1 && (para_Space === arrElements[0].Type || (para_Text === arrElements[0].Type && arrElements[0].IsNBSP())))
@@ -376,15 +385,7 @@
 		oParagraph.GetPrevRunElements(oRunElementsBefore);
 		var arrElements = oRunElementsBefore.GetElements();
 		if (arrElements.length > 0)
-		{
-			var oPrevElement = arrElements[0];
-			if (para_Text === oPrevElement.Type
-				&& 45 !== oPrevElement.Value
-				&& 40 !== oPrevElement.Value
-				&& 91 !== oPrevElement.Value
-				&& 123 !== oPrevElement.Value)
-				isOpenQuote = false;
-		}
+			isOpenQuote = this.private_IsOpenQuoteAfter(arrElements[0]);
 
 		if (!isDoubleQuote && (1050 === nLang || 1060 === nLang))
 			return false;
@@ -403,6 +404,18 @@
 
 		return true;
 	};
+	CRunAutoCorrect.prototype.private_IsOpenQuoteAfter = function(oPrevElement)
+	{
+		// nbsp - – − ( [ {
+		return (!oPrevElement.IsText()
+			|| oPrevElement.IsNBSP()
+			|| 0x002D === oPrevElement.Value
+			|| 0x2013 === oPrevElement.Value
+			|| 0x2212 === oPrevElement.Value
+			|| 0x0028 === oPrevElement.Value
+			|| 0x005B === oPrevElement.Value
+			|| 0x007B === oPrevElement.Value);
+	};
 	CRunAutoCorrect.prototype.private_ReplaceSmartQuotes = function(nLang, isDoubleQuote, isOpenQuote)
 	{
 		this.Run.RemoveFromContent(this.Pos, 1);
@@ -418,7 +431,7 @@
 				case 1061:
 				{
 					// „text“
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x201E : 0x201C));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201E : 0x201C));
 					break;
 				}
 				case 1038:
@@ -427,7 +440,7 @@
 				case 1062:
 				{
 					// „text”
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x201E : 0x201D));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201E : 0x201D));
 					break;
 				}
 				case 1030:
@@ -435,19 +448,19 @@
 				case 1053:
 				{
 					// ”text”
-					this.Run.AddToContent(this.Pos, new ParaText(0x201D));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(0x201D));
 					break;
 				}
 				case 1049:
 				{
 					// «text»
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x00AB : 0x00BB));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x00AB : 0x00BB));
 					break;
 				}
 				case 1060:
 				{
 					// »text«
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x00BB : 0x00AB));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x00BB : 0x00AB));
 					break;
 				}
 				case 1036:
@@ -455,13 +468,13 @@
 					// « text »
 					if (isOpenQuote)
 					{
-						this.Run.AddToContent(this.Pos, new ParaText(0x00AB));
-						this.Run.AddToContent(this.Pos + 1, new ParaText(0x00A0));
+						this.Run.AddToContent(this.Pos, new AscWord.CRunText(0x00AB));
+						this.Run.AddToContent(this.Pos + 1, new AscWord.CRunText(0x00A0));
 					}
 					else
 					{
-						this.Run.AddToContent(this.Pos, new ParaText(0x00A0));
-						this.Run.AddToContent(this.Pos + 1, new ParaText(0x00BB));
+						this.Run.AddToContent(this.Pos, new AscWord.CRunText(0x00A0));
+						this.Run.AddToContent(this.Pos + 1, new AscWord.CRunText(0x00BB));
 					}
 
 					this.Pos++;
@@ -472,7 +485,7 @@
 				default:
 				{
 					// “text”
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x201C : 0x201D));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201C : 0x201D));
 					break;
 				}
 			}
@@ -487,13 +500,13 @@
 				case 1051:
 				{
 					// ‚text‘
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x201A : 0x2018));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201A : 0x2018));
 					break;
 				}
 				case 1048:
 				{
 					// ‚text’
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x201A : 0x2019));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201A : 0x2019));
 					break;
 				}
 				case 1030:
@@ -503,13 +516,13 @@
 				case 1061:
 				{
 					// ’text’
-					this.Run.AddToContent(this.Pos, new ParaText(0x2019));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(0x2019));
 					break;
 				}
 				default:
 				{
 					// ‘text’
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x2018 : 0x2019));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x2018 : 0x2019));
 					break;
 				}
 			}
@@ -544,7 +557,7 @@
 
 			oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectHyphensWithDash);
 
-			var oDash = new ParaText(8212);
+			var oDash = new AscWord.CRunText(8212);
 			oRun.AddToContent(this.Pos + 1, oDash);
 			var oStartPos = oRunElementsBefore.GetContentPositions()[0];
 			var oEndPos   = oContentPos;
@@ -633,7 +646,7 @@
 
 				oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectHyphensWithDash);
 				oRun.RemoveFromContent(nInRunPos, 1);
-				oRun.AddToContent(nInRunPos, new ParaText(8211));
+				oRun.AddToContent(nInRunPos, new AscWord.CRunText(8211));
 				oDocument.Recalculate();
 				oDocument.FinalizeAction();
 				return true;
@@ -663,7 +676,7 @@
 		if (oRun.IsInHyperlink())
 			return false;
 
-		if (/(^(((http|https|ftp):\/\/)|(mailto:)|(www.)))|@/i.test(sText))
+		if (AscCommon.rx_allowedProtocols.test(sText) || /^(www.)|@/i.test(sText))
 		{
 			// Удаляем концевые пробелы и переводы строки перед проверкой гиперссылок
 			sText = sText.replace(/\s+$/, '');
@@ -846,7 +859,7 @@
 
 		oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectFirstLetterOfSentence);
 
-		var oNewItem = new ParaText(String.fromCharCode(oItem.Value).toUpperCase().charCodeAt(0));
+		var oNewItem = new AscWord.CRunText(String.fromCharCode(oItem.Value).toUpperCase().charCodeAt(0));
 		oRun.RemoveFromContent(nInRunPos, 1, true);
 		oRun.AddToContent(nInRunPos, oNewItem, true);
 
@@ -1292,63 +1305,63 @@
 		var nNumType = null;
 		if (sText === "(a)")
 		{
-			nNumType = numbering_presentationnumfrmt_AlphaLcParenBoth;
+			nNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth;
 		}
 		else if (sText === "a)")
 		{
-			nNumType = numbering_presentationnumfrmt_AlphaLcParenR;
+			nNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcParenR;
 		}
 		else if (sText === "a.")
 		{
-			nNumType = numbering_presentationnumfrmt_AlphaLcPeriod;
+			nNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcPeriod;
 		}
 		else if (sText === "(A)")
 		{
-			nNumType = numbering_presentationnumfrmt_AlphaUcParenBoth;
+			nNumType = AscFormat.numbering_presentationnumfrmt_AlphaUcParenBoth;
 		}
 		else if (sText === "A)")
 		{
-			nNumType = numbering_presentationnumfrmt_AlphaUcParenR;
+			nNumType = AscFormat.numbering_presentationnumfrmt_AlphaUcParenR;
 		}
 		else if (sText === "A.")
 		{
-			nNumType = numbering_presentationnumfrmt_AlphaUcPeriod;
+			nNumType = AscFormat.numbering_presentationnumfrmt_AlphaUcPeriod;
 		}
 		else if (sText === "(1)")
 		{
-			nNumType = numbering_presentationnumfrmt_ArabicParenBoth;
+			nNumType = AscFormat.numbering_presentationnumfrmt_ArabicParenBoth;
 		}
 		else if (sText === "1)")
 		{
-			nNumType = numbering_presentationnumfrmt_ArabicParenR;
+			nNumType = AscFormat.numbering_presentationnumfrmt_ArabicParenR;
 		}
 		else if (sText === "1.")
 		{
-			nNumType = numbering_presentationnumfrmt_ArabicPeriod;
+			nNumType = AscFormat.numbering_presentationnumfrmt_ArabicPeriod;
 		}
 		else if (sText === "(i)")
 		{
-			nNumType = numbering_presentationnumfrmt_RomanLcParenBoth;
+			nNumType = AscFormat.numbering_presentationnumfrmt_RomanLcParenBoth;
 		}
 		else if (sText === "i)")
 		{
-			nNumType = numbering_presentationnumfrmt_RomanLcParenR;
+			nNumType = AscFormat.numbering_presentationnumfrmt_RomanLcParenR;
 		}
 		else if (sText === "i.")
 		{
-			nNumType = numbering_presentationnumfrmt_RomanLcPeriod;
+			nNumType = AscFormat.numbering_presentationnumfrmt_RomanLcPeriod;
 		}
 		else if (sText === "(I)")
 		{
-			nNumType = numbering_presentationnumfrmt_RomanUcParenBoth;
+			nNumType = AscFormat.numbering_presentationnumfrmt_RomanUcParenBoth;
 		}
 		else if (sText === "I)")
 		{
-			nNumType = numbering_presentationnumfrmt_RomanUcParenR;
+			nNumType = AscFormat.numbering_presentationnumfrmt_RomanUcParenR;
 		}
 		else if (sText === "I.")
 		{
-			nNumType = numbering_presentationnumfrmt_RomanUcPeriod;
+			nNumType = AscFormat.numbering_presentationnumfrmt_RomanUcPeriod;
 		}
 		if (nNumType !== null)
 		{
@@ -1362,18 +1375,18 @@
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscCommonWord'] = window['AscCommonWord'] || {};
-	window['AscCommonWord'].CRunAutoCorrect = CRunAutoCorrect;
+	window['AscWord'] = window['AscWord'] || {};
+	window['AscWord'].CRunAutoCorrect = CRunAutoCorrect;
 
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_NONE                     = AUTOCORRECT_FLAGS_NONE;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_ALL                      = AUTOCORRECT_FLAGS_ALL;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION       = AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_SMART_QUOTES             = AUTOCORRECT_FLAGS_SMART_QUOTES;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH         = AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_HYPERLINK                = AUTOCORRECT_FLAGS_HYPERLINK;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE    = AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_NUMBERING                = AUTOCORRECT_FLAGS_NUMBERING;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD = AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD;
+	window['AscWord'].AUTOCORRECT_FLAGS_NONE                     = AUTOCORRECT_FLAGS_NONE;
+	window['AscWord'].AUTOCORRECT_FLAGS_ALL                      = AUTOCORRECT_FLAGS_ALL;
+	window['AscWord'].AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION       = AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION;
+	window['AscWord'].AUTOCORRECT_FLAGS_SMART_QUOTES             = AUTOCORRECT_FLAGS_SMART_QUOTES;
+	window['AscWord'].AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH         = AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
+	window['AscWord'].AUTOCORRECT_FLAGS_HYPERLINK                = AUTOCORRECT_FLAGS_HYPERLINK;
+	window['AscWord'].AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE    = AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE;
+	window['AscWord'].AUTOCORRECT_FLAGS_NUMBERING                = AUTOCORRECT_FLAGS_NUMBERING;
+	window['AscWord'].AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD = AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD;
 
 })(window);
 

@@ -49,7 +49,7 @@
 			return this.onEndLoadFile2(result);
 		}
 
-		if (this.isLoadFullApi && this.DocInfo && this.isLoadFonts)
+		if (this.isLoadFullApi && this.DocInfo && this._isLoadedModules())
 		{
 			this.asc_registerCallback('asc_onDocumentContentReady', function(){
 				DesktopOfflineUpdateLocalName(Asc.editor || editor);
@@ -155,6 +155,7 @@ window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data, _len)
 		AscCommon.g_oDocumentUrls.documentUrl = "file://" + AscCommon.g_oDocumentUrls.documentUrl;
 	}
 
+	editor.setOpenedAt(Date.now());
 	AscCommon.g_oIdCounter.m_sUserId = window["AscDesktopEditor"]["CheckUserId"]();
 	if (_data === "")
 	{

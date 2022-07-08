@@ -273,7 +273,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_RelSizeAnchor]      	 = AscFormat.CRelSizeAnchor;
 		this.m_oFactoryClass[AscDFH.historyitem_type_AbsSizeAnchor]      	 = AscFormat.CAbsSizeAnchor;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ParaRevisionMove]       = AscCommon.CParaRevisionMove;
-		this.m_oFactoryClass[AscDFH.historyitem_type_RunRevisionMove]        = AscCommon.CRunRevisionMove;
+		this.m_oFactoryClass[AscDFH.historyitem_type_RunRevisionMove]        = AscWord.CRunRevisionMove;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocPart]                = AscCommon.CDocPart;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SlicerView]             = AscFormat.CSlicer;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ChartStyle]             = AscFormat.CChartStyle;
@@ -369,7 +369,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtDrawing   ]     = AscFormat.Drawing;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DiagramData       ]     = AscFormat.DiagramData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_FunctionValue     ]     = AscFormat.FunctionValue;
-		this.m_oFactoryClass[AscDFH.historyitem_type_PointInfo         ]     = AscFormat.PointInfo;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ShapeSmartArtInfo ]     = AscFormat.ShapeSmartArtInfo;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtTree      ]     = AscFormat.SmartArtTree;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNode      ]     = AscFormat.SmartArtNode;

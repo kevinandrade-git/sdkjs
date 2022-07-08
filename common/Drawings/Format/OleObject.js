@@ -311,7 +311,7 @@ function (window, undefined) {
         oBodyPr.anchorCtr = false;
         oBodyPr.forceAA = false;
         oBodyPr.compatLnSpc = true;
-        oBodyPr.prstTxWarp = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreatePrstTxWarpGeometry("textNoShape");}, this, []);
+        oBodyPr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry("textNoShape");
         oBodyPr.textFit = new AscFormat.CTextFit();
         oBodyPr.textFit.type = AscFormat.text_fit_Auto;
         oShape.txBody.setBodyPr(oBodyPr);
@@ -347,9 +347,12 @@ function (window, undefined) {
         return oShape;
     };
 
-    COleObject.prototype.editExternal = function(sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight) {
-        if(typeof sData === "string" && this.m_sData !== sData) {
-            this.setData(sData);
+    COleObject.prototype.editExternal = function(Data, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight) {
+        if(typeof Data === "string" && this.m_sData !== Data) {
+            this.setData(Data);
+        }
+        if (Data instanceof Uint8Array) {
+            this.setBinaryData(Data)
         }
         if(typeof sImageUrl  === "string" &&
             (!this.blipFill || this.blipFill.RasterImageId !== sImageUrl)) {
@@ -439,30 +442,32 @@ function (window, undefined) {
         }
     };
 
+    COleObject.prototype.canEditTableOleObject = function(bReturnOle) {
+        var canEdit = this.m_aBinaryData &&
+          (this.m_nOleType === AscCommon.c_oAscOleObjectTypes.spreadsheet || this.m_sApplicationId === spreadsheetApplicationId);
+        if (bReturnOle) {
+            return canEdit ? this : null;
+        }
+        return !!canEdit;
+    };
+
     function asc_putBinaryDataToFrameFromTableOleObject(oleObject)
     {
         if (oleObject instanceof AscFormat.COleObject) {
             var dataSize = oleObject.m_aBinaryData.length;
             var data = AscCommon.Base64.encode(oleObject.m_aBinaryData);
             return {
-                binary: "XLSY;v2;" + dataSize  + ";" + data,
-                left: oleObject.x,
-                top: oleObject.y,
-                width: oleObject.extX,
-                height: oleObject.extY
+                "binary": "XLSY;v2;" + dataSize  + ";" + data,
+                "isFromSheetEditor": !!oleObject.worksheet,
             };
         }
         return {
-            binary: null,
-            left: 0,
-            top: 0,
-            width: 0,
-            height: 0
+            "binary": null
         };
     };
     window['Asc'] = window['Asc'] || {};
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].COleObject = COleObject;
-    window['Asc'].asc_putBinaryDataToFrameFromTableOleObject = asc_putBinaryDataToFrameFromTableOleObject;
+    window['Asc'].asc_putBinaryDataToFrameFromTableOleObject = window['Asc']['asc_putBinaryDataToFrameFromTableOleObject'] = asc_putBinaryDataToFrameFromTableOleObject;
 
 })(window);

@@ -124,6 +124,7 @@ CGraphicObjects.prototype =
     getConnectorsForCheck: DrawingObjectsController.prototype.getConnectorsForCheck,
     getConnectorsForCheck2: DrawingObjectsController.prototype.getConnectorsForCheck2,
     checkDrawingHyperlinkAndMacro: DrawingObjectsController.prototype.checkDrawingHyperlinkAndMacro,
+    canEditTableOleObject: DrawingObjectsController.prototype.canEditTableOleObject,
     canEditGeometry: DrawingObjectsController.prototype.canEditGeometry,
     startEditGeometry: DrawingObjectsController.prototype.startEditGeometry,
 
@@ -583,32 +584,51 @@ CGraphicObjects.prototype =
     {
         if(data.All)
         {
-            for(var i = 0; i < this.drawingObjects.length; ++i)
+            for(let nDrawing = 0; nDrawing < this.drawingObjects.length; ++nDrawing)
             {
-                if(this.drawingObjects[i].GraphicObj)
+                let oParaDrawing = this.drawingObjects[nDrawing];
+                if(oParaDrawing)
                 {
-                    if(this.drawingObjects[i].GraphicObj.recalcText)
+                    let oSp = oParaDrawing.GraphicObj;
+                    if(oSp)
                     {
-                        this.drawingObjects[i].GraphicObj.recalcText(true);
+                        if(oSp.recalcText)
+                        {
+                            oSp.recalcText();
+                        }
+                        if(oSp.handleUpdateExtents)
+                        {
+                            oSp.handleUpdateExtents();
+                        }
+                        oSp.recalculate();
                     }
-                    this.drawingObjects[i].GraphicObj.recalculate();
                 }
             }
-            for(var i = 0; i < this.drawingObjects.length; ++i)
+            for(let nDrawing = 0; nDrawing < this.drawingObjects.length; ++nDrawing)
             {
-                if(this.drawingObjects[i].GraphicObj && this.drawingObjects[i].GraphicObj.recalculateText)
+                let oParaDrawing = this.drawingObjects[nDrawing];
+                if(oParaDrawing)
                 {
-                    this.drawingObjects[i].GraphicObj.recalculateText();
+                    let oSp = oParaDrawing.GraphicObj;
+                    if(oSp)
+                    {
+                        if(oSp.recalculateText)
+                        {
+                            oSp.recalculateText();
+                        }
+                    }
                 }
             }
         }
         else
         {
-            var map = data.Map;
-            for(var key in map)
+            let oDrawingsMap = data.Map;
+            for(let sId in oDrawingsMap)
             {
-                if(map.hasOwnProperty(key))
-                    map[key].recalculate();
+                if(oDrawingsMap.hasOwnProperty(sId))
+                {
+                    oDrawingsMap[sId].recalculate();
+                }
             }
         }
     },
@@ -621,18 +641,23 @@ CGraphicObjects.prototype =
         }
         else
         {
-            var map = data.Map;
-            for(var key in map)
+            let oDrawingsMap = data.Map;
+            for(let sId in oDrawingsMap)
             {
-                if(map.hasOwnProperty(key) && map[key].recalculateText)
-                    map[key].recalculateText();
+                if(oDrawingsMap.hasOwnProperty(sId))
+                {
+                    let oDrawing = oDrawingsMap[sId];
+                    if(oDrawing.recalculateText)
+                    {
+                        oDrawing.recalculateText();
+                    }
+                }
             }
         }
     },
 
     recalculate: function()
     {
-        var b_update = false;
         for(var key in this.recalculateMap)
         {
             if(this.recalculateMap.hasOwnProperty(key))
@@ -1225,29 +1250,6 @@ CGraphicObjects.prototype =
         }
     },
 
-    editTableOleObject: function(binaryInfo)
-    {
-        if (binaryInfo && binaryInfo.imageUrl) {
-            var blipUrl = binaryInfo.imageUrl;
-            var binaryDataOfSheet = AscCommon.Base64.decode(binaryInfo.binary);
-
-            var selectedObjects = AscFormat.getObjectsByTypesFromArr(this.selectedObjects);
-            if (selectedObjects.oleObjects.length === 1) {
-                var selectedOleObject = selectedObjects.oleObjects[0];
-                var blipFill = AscFormat.CreateBlipFillRasterImageId(blipUrl);
-                var sizes = AscCommon.getSourceImageSize(blipUrl);
-                selectedOleObject.setBinaryData(binaryDataOfSheet);
-                selectedOleObject.setBlipFill(blipFill);
-                var originalWidth = selectedOleObject.spPr.xfrm.extX;
-                var koef = (originalWidth / sizes.width) || 0;
-                selectedOleObject.spPr.xfrm.setExtY(sizes.height * koef);
-                selectedOleObject.parent.CheckWH();
-                this.document.Recalculate();
-                this.document.Document_UpdateInterfaceState();
-            }
-        }
-    },
-
     getCompatibilityMode: function(){
         var ret = 0xFF;
         if(this.document && this.document.GetCompatibilityMode){
@@ -1604,7 +1606,7 @@ CGraphicObjects.prototype =
             if(drawing && drawing.ParaMath){
                 editor.sync_OnConvertEquationToMath(drawing);
             }
-            else if (oleObject.m_aBinaryData && oleObject.m_nOleType === AscCommon.c_oAscOleObjectTypes.spreadsheet)
+            else if (oleObject.canEditTableOleObject())
             {
                 editor.asc_doubleClickOnTableOleObject(oleObject);
             }
@@ -1973,7 +1975,7 @@ CGraphicObjects.prototype =
             {
                 bSelectedAll = false;
             }
-            SelectedContent.Add( new CSelectedElement( para, bSelectedAll ) );
+            SelectedContent.Add( new AscCommonWord.CSelectedElement( para, bSelectedAll ) );
         }
     },
 
@@ -2895,7 +2897,7 @@ CGraphicObjects.prototype =
             }));
         para_drawing.Set_XYForAdd(dOffX, dOffY, nearest_pos, nPageIndex);
 
-        para_drawing.Add_ToDocument2(first_paragraph);
+        para_drawing.AddToParagraph(first_paragraph);
         para_drawing.Parent = first_paragraph;
         this.addGraphicObject(para_drawing);
         this.resetSelection();
@@ -3027,12 +3029,16 @@ CGraphicObjects.prototype =
                     drawing.Set_XYForAdd(fPosX, fPosY, nearest_pos, page_num);
 
                     sp.convertFromSmartArt(true);
+                    var oSm = sp.hasSmartArt && sp.hasSmartArt(true);
+                    if (oSm && oSm.group) {
+                        oSm.group.updateCoordinatesAfterInternalResize();
+                    }
                     aDrawings.push(drawing);
                 }
                 for(j = 0; j < aDrawings.length; ++j)
                 {
                     drawing = aDrawings[j];
-                    drawing.Add_ToDocument2(parent_paragraph);
+                    drawing.AddToParagraph(parent_paragraph);
                     this.selectObject(drawing.GraphicObj, page_num);
                 }
             }

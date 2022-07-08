@@ -38,7 +38,6 @@ var _internalStorage = {
 };
 
 window['SockJS'] = createSockJS();
-window['JSZipUtils'] = JSZipUtils();
 
 Asc['asc_docs_api'].prototype.Update_ParaInd = function( Ind )
 {
@@ -2055,8 +2054,26 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
             var _w = _params[_current.pos++];
             var _h = _params[_current.pos++];
             var _pageNum = _params[_current.pos++];
+            var _additionalParams = _params[_current.pos++];
+            var _posX = _params[_current.pos++];
+            var _posY = _params[_current.pos++];
+            var _wrapType = _params[_current.pos++];
 
             this.AddImageUrlNative(_src, _w, _h, _pageNum);
+            break;
+        }
+        case 401: // ASC_MENU_EVENT_TYPE_INSERT_SCREEN_IMAGE
+        {
+            var _src = _params[_current.pos++];
+            var _w = _params[_current.pos++];
+            var _h = _params[_current.pos++];
+            var _pageNum = _params[_current.pos++];
+            var _additionalParams = _params[_current.pos++];
+            var _posX = _params[_current.pos++];
+            var _posY = _params[_current.pos++];
+            var _wrapType = _params[_current.pos++];
+
+            this.AddImageUrlAtPosNative(_src, _w, _h, _pageNum, _posX, _posY, _wrapType);
             break;
         }
         case 53: // ASC_MENU_EVENT_TYPE_INSERT_SHAPE
@@ -2507,6 +2524,27 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
           _api.WordControl.m_oDrawingDocument.FirePaint();
 
           break;
+        }
+
+        case 21002: // ASC_COAUTH_EVENT_TYPE_REPLACE_URL_IMAGE
+        {
+            var urls = JSON.parse(_params[0]);
+            AscCommon.g_oDocumentUrls.addUrls(urls);
+            var firstUrl;
+            for (var i in urls) {
+                if (urls.hasOwnProperty(i)) {
+                    firstUrl = urls[i];
+                    break;
+                }
+            }
+
+            var _src = firstUrl;
+
+            var imageProp = new asc_CImgProperty();
+            imageProp.ImageUrl = _src;
+            this.ImgApply(imageProp);
+
+            break;
         }
 
         case 22001: // ASC_MENU_EVENT_TYPE_SET_PASSWORD
@@ -3901,6 +3939,7 @@ function asc_menu_ReadAscFill_grad(_params, _cursor)
                         }
                     }
                 }
+                _cursor.pos++;
                 break;
             }
             case 255:
@@ -4924,7 +4963,7 @@ Asc['asc_docs_api'].prototype.put_AddPageBreak = function()
         if ( null === Document.IsCursorInHyperlink(false) )
         {
             Document.StartAction();
-            Document.AddToParagraph( new ParaNewLine( break_Page ) );
+            Document.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page));
 			Document.FinalizeAction();
         }
     }
@@ -4949,7 +4988,7 @@ Asc['asc_docs_api'].prototype.put_AddLineBreak = function()
         if ( null === Document.IsCursorInHyperlink(false) )
         {
             Document.StartAction();
-            Document.AddToParagraph( new ParaNewLine( para_NewLine ) );
+            Document.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
 			Document.FinalizeAction();
         }
     }
@@ -5142,6 +5181,10 @@ Asc['asc_docs_api'].prototype.AddImageUrlNative = function(url, _w, _h, _pageNum
     this.WordControl.m_oLogicDocument.AddInlineImage(wI, hI, url);
 	this.WordControl.m_oLogicDocument.Recalculate();
 	this.WordControl.m_oLogicDocument.FinalizeAction();
+};
+Asc['asc_docs_api'].prototype.AddImageUrlAtPosNative = function(url, _w, _h, _pageNum, _posX, _posY, _wrapType)
+{
+    _api.AddImageToPage(url, _pageNum, _posX, _posY, _w, _h, _wrapType);
 };
 Asc['asc_docs_api'].prototype.SetContentControlPictureUrlNative = function(sUrl, sId)
 {
@@ -5427,7 +5470,11 @@ Asc['asc_docs_api'].prototype.SetDocumentModified = function(bValue)
 // find -------------------------------------------------------------------------------------------------
 Asc['asc_docs_api'].prototype.asc_findText = function(text, isNext, isMatchCase, callback)
 {
-    var SearchEngine = editor.WordControl.m_oLogicDocument.Search( text, { MatchCase : isMatchCase } );
+	let oProps = AscCommon.CSearchSettings();
+	oProps.SetText(text);
+	oProps.SetMatchCase(isMatchCase);
+
+    var SearchEngine = editor.WordControl.m_oLogicDocument.Search(oProps);
 
     var Id = this.WordControl.m_oLogicDocument.GetSearchElementId( isNext );
 
@@ -5436,12 +5483,17 @@ Asc['asc_docs_api'].prototype.asc_findText = function(text, isNext, isMatchCase,
 
     if (callback)
         callback(SearchEngine.Count);
+
     return SearchEngine.Count;
 };
 
 Asc['asc_docs_api'].prototype.asc_replaceText = function(text, replaceWith, isReplaceAll, isMatchCase)
 {
-    this.WordControl.m_oLogicDocument.Search( text, { MatchCase : isMatchCase } );
+	let oProps = AscCommon.CSearchSettings();
+	oProps.SetText(text);
+	oProps.SetMatchCase(isMatchCase);
+
+    this.WordControl.m_oLogicDocument.Search(oProps);
 
     if ( true === isReplaceAll )
     {
@@ -5544,12 +5596,6 @@ FontStyleBoldItalic: 3,
 FontStyleUnderline:  4,
 FontStyleStrikeout:  8
 };
-
-function CFontManager()
-{
-    this.m_oLibrary = {};
-    this.Initialize = function(){};
-}
 
 function CStylesPainter()
 {
@@ -6193,11 +6239,8 @@ function initSpellCheckApi() {
 
 function NativeOpenFile3(_params, documentInfo)
 {
-    window["CreateMainTextMeasurerWrapper"]();
-
-    window.g_file_path = "native_open_file";
     window.NATIVE_DOCUMENT_TYPE = window["native"]["GetEditorType"]();
-    var doc_bin = window["native"]["GetFileString"](window.g_file_path);
+    window.NATIVE_DOCUMENT_TYPE = window["native"]["GetEditorType"]();
     if (window.NATIVE_DOCUMENT_TYPE == "presentation" || window.NATIVE_DOCUMENT_TYPE == "document")
     {
         sdkCheck = documentInfo["sdkCheck"];
@@ -6335,7 +6378,7 @@ function NativeOpenFile3(_params, documentInfo)
 
 
         } else {
-            var doc_bin = window["native"]["GetFileString"](window.g_file_path);
+            var doc_bin = window["native"]["GetFileString"]("native_open_file");
             _api["asc_nativeOpenFile"](doc_bin);
 
            	if (window.documentInfo["viewmode"]) {
@@ -7297,6 +7340,39 @@ Asc['asc_docs_api'].prototype.asc_setSpellCheck = function(isOn)
         editor.WordControl.m_oDrawingDocument.FirePaint();
     }
 };
+
+// The helper function, called from the native application,
+// returns information about the document as a JSON string.
+window["asc_docs_api"].prototype["asc_nativeGetCoreProps"] = function() {
+    var props = (_api) ? _api.asc_getCoreProps() : null,
+        value;
+
+    if (props) {
+        var coreProps = {};
+        coreProps["asc_getModified"] = props.asc_getModified();
+
+        value = props.asc_getLastModifiedBy();
+        if (value)
+        coreProps["asc_getLastModifiedBy"] = AscCommon.UserInfoParser.getParsedName(value);
+
+        coreProps["asc_getTitle"] = props.asc_getTitle();
+        coreProps["asc_getSubject"] = props.asc_getSubject();
+        coreProps["asc_getDescription"] = props.asc_getDescription();
+        coreProps["asc_getCreated"] = props.asc_getCreated();
+
+        var authors = [];
+        value = props.asc_getCreator();//"123\"\"\"\<\>,456";
+        value && value.split(/\s*[,;]\s*/).forEach(function (item) {
+            authors.push(item);
+        });
+
+        coreProps["asc_getCreator"] = authors;
+
+        return coreProps;
+    }
+
+    return {};
+}
 
 window["AscCommon"].getFullImageSrc2 = function(src) {
     var start = src.slice(0, 6);

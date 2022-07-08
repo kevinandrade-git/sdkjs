@@ -695,9 +695,6 @@
 			case AscDFH.historydescription_Presentation_EditChart                      :
 				sString = "Presentation_EditChart";
 				break;
-			case AscDFH.historydescription_Presentation_EditTableOleObjectFromBinary                      :
-				sString = "Presentation_EditChart";
-				break;
 			case AscDFH.historydescription_Presentation_ParagraphAdd                   :
 				sString = "Presentation_ParagraphAdd";
 				break;
@@ -1641,6 +1638,18 @@
 	window['AscDFH'].historyitem_type_SmartArtNodeData       = 2098 << 16;
 	window['AscDFH'].historyitem_type_BuBlip                 = 2099 << 16;
 
+	window['AscDFH'].historyitem_type_VMLArc                 = 2099 << 16;
+	window['AscDFH'].historyitem_type_VMLCurve               = 2100 << 16;
+	window['AscDFH'].historyitem_type_VMLGroup               = 2101 << 16;
+	window['AscDFH'].historyitem_type_VMLImage               = 2102 << 16;
+	window['AscDFH'].historyitem_type_VMLLine                = 2103 << 16;
+	window['AscDFH'].historyitem_type_VMLOval                = 2104 << 16;
+	window['AscDFH'].historyitem_type_VMLPolyLine            = 2105 << 16;
+	window['AscDFH'].historyitem_type_VMLRect                = 2106 << 16;
+	window['AscDFH'].historyitem_type_VMLRoundRect           = 2107 << 16;
+	window['AscDFH'].historyitem_type_VMLShape               = 2108 << 16;
+	window['AscDFH'].historyitem_type_VMLShapeType           = 2109 << 16;
+	window['AscDFH'].historyitem_type_VMLClientData          = 2110 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1751,6 +1760,9 @@
 	window['AscDFH'].historyitem_TextPr_RFonts_HAnsi_Theme    = window['AscDFH'].historyitem_type_TextPr | 32;
 	window['AscDFH'].historyitem_TextPr_RFonts_CS_Theme       = window['AscDFH'].historyitem_type_TextPr | 33;
 	window['AscDFH'].historyitem_TextPr_RFonts_EastAsia_Theme = window['AscDFH'].historyitem_type_TextPr | 34;
+	window['AscDFH'].historyitem_TextPr_BoldCS                = window['AscDFH'].historyitem_type_TextPr | 35;
+	window['AscDFH'].historyitem_TextPr_ItalicCS              = window['AscDFH'].historyitem_type_TextPr | 36;
+	window['AscDFH'].historyitem_TextPr_Ligatures             = window['AscDFH'].historyitem_type_TextPr | 37;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaDrawing
 	//------------------------------------------------------------------------------------------------------------------
@@ -2054,6 +2066,12 @@
 	window['AscDFH'].historyitem_ParaRun_RFonts_HAnsi_Theme    = window['AscDFH'].historyitem_type_ParaRun | 46;
 	window['AscDFH'].historyitem_ParaRun_RFonts_CS_Theme       = window['AscDFH'].historyitem_type_ParaRun | 47;
 	window['AscDFH'].historyitem_ParaRun_RFonts_EastAsia_Theme = window['AscDFH'].historyitem_type_ParaRun | 48;
+	window['AscDFH'].historyitem_ParaRun_BoldCS                = window['AscDFH'].historyitem_type_ParaRun | 49;
+	window['AscDFH'].historyitem_ParaRun_ItalicCS              = window['AscDFH'].historyitem_type_ParaRun | 50;
+	window['AscDFH'].historyitem_ParaRun_FontSizeCS            = window['AscDFH'].historyitem_type_ParaRun | 51;
+	window['AscDFH'].historyitem_ParaRun_Ligatures             = window['AscDFH'].historyitem_type_ParaRun | 52;
+	window['AscDFH'].historyitem_ParaRun_CS                    = window['AscDFH'].historyitem_type_ParaRun | 53;
+	window['AscDFH'].historyitem_ParaRun_RTL                   = window['AscDFH'].historyitem_type_ParaRun | 54;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSectionPr
@@ -3499,6 +3517,7 @@
 	AscDFH.historyitem_IfVal = AscDFH.historyitem_type_If | 5;
 	AscDFH.historyitem_IfAddList = AscDFH.historyitem_type_If | 6;
 	AscDFH.historyitem_IfRemoveList = AscDFH.historyitem_type_If | 7;
+	AscDFH.historyitem_IfRef = AscDFH.historyitem_type_If | 8;
 
 	AscDFH.historyitem_ConstrFact = AscDFH.historyitem_type_Constr | 1;
 	AscDFH.historyitem_ConstrFor = AscDFH.historyitem_type_Constr | 2;
@@ -3858,6 +3877,8 @@
 
 	AscDFH.historyitem_CCommonDataClrListAdd    = AscDFH.historyitem_type_CCommonDataClrList | 1;
 	AscDFH.historyitem_CCommonDataClrListRemove = AscDFH.historyitem_type_CCommonDataClrList | 2;
+	AscDFH.historyitem_CCommonDataClrListHueDir = AscDFH.historyitem_type_CCommonDataClrList | 3;
+	AscDFH.historyitem_CCommonDataClrListMeth   = AscDFH.historyitem_type_CCommonDataClrList | 4;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4274,7 +4295,7 @@
 	window['AscDFH'].historydescription_Document_ConvertMathDisplayMode             = 0x0190;
 	window['AscDFH'].historydescription_Document_RemoveHdrFtr                       = 0x0191;
 	window['AscDFH'].historydescription_Document_AddParagraphToTOC                  = 0x0192;
-	window['AscDFH'].historydescription_Presentation_EditTableOleObjectFromBinary   = 0x0193;
+	window['AscDFH'].historydescription_Document_FillFormsByTags                    = 0x0193;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

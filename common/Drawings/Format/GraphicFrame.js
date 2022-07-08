@@ -199,10 +199,13 @@ CGraphicFrame.prototype.getDocContent= function()
         return null;
 };
 
-CGraphicFrame.prototype.setSpPr= function(spPr)
+CGraphicFrame.prototype.setSpPr = function(spPr)
 {
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSpPr, this.spPr, spPr));
         this.spPr = spPr;
+        if(spPr) {
+            spPr.setParent(this);
+        }
 };
 
 CGraphicFrame.prototype.setGraphicObject= function(graphicObject)
@@ -239,11 +242,11 @@ CGraphicFrame.prototype.getObjectType= function()
         return AscDFH.historyitem_type_GraphicFrame;
 };
 
-CGraphicFrame.prototype.Search = function(Str, Props, SearchEngine, Type)
+CGraphicFrame.prototype.Search = function(SearchEngine, Type)
     {
         if(this.graphicObject)
         {
-            this.graphicObject.Search(Str, Props, SearchEngine, Type);
+            this.graphicObject.Search(SearchEngine, Type);
         }
 };
 
@@ -903,7 +906,8 @@ CGraphicFrame.prototype.draw = function(graphics)
             this.drawLocks(this.transform, graphics);
             graphics.RestoreGrState();
         }
-        this.drawAnimLabels && this.drawAnimLabels(graphics);
+        graphics.SetIntegerGrid(true);
+        graphics.reset();
 };
 
 CGraphicFrame.prototype.Select = function()
@@ -1259,32 +1263,32 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
                         if(oPr2.TableBorders.Bottom && oPr2.TableBorders.Bottom.Unifill){
                             oPr2.TableBorders.Bottom.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.Bottom.Unifill.getRGBAColor();
-                            oPr2.TableBorders.Bottom.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.Bottom.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                         if(oPr2.TableBorders.Left && oPr2.TableBorders.Left.Unifill){
                             oPr2.TableBorders.Left.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.Left.Unifill.getRGBAColor();
-                            oPr2.TableBorders.Left.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.Left.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                         if(oPr2.TableBorders.Right && oPr2.TableBorders.Right.Unifill){
                             oPr2.TableBorders.Right.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.Right.Unifill.getRGBAColor();
-                            oPr2.TableBorders.Right.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.Right.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                         if(oPr2.TableBorders.Top && oPr2.TableBorders.Top.Unifill){
                             oPr2.TableBorders.Top.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.Top.Unifill.getRGBAColor();
-                            oPr2.TableBorders.Top.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.Top.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                         if(oPr2.TableBorders.InsideH && oPr2.TableBorders.InsideH.Unifill){
                             oPr2.TableBorders.InsideH.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.InsideH.Unifill.getRGBAColor();
-                            oPr2.TableBorders.InsideH.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.InsideH.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                         if(oPr2.TableBorders.InsideV && oPr2.TableBorders.InsideV.Unifill){
                             oPr2.TableBorders.InsideV.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.InsideV.Unifill.getRGBAColor();
-                            oPr2.TableBorders.InsideV.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.InsideV.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                     }
                 }
@@ -1345,30 +1349,30 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
                                     if(oPr.Shd.Unifill){
                                         oPr.Shd.Unifill.check(oTheme, oColorMap);
                                         RGBA = oPr.Shd.Unifill.getRGBAColor();
-                                        oPr.Shd.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                                        oPr.Shd.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                                     }
                                 }
                                 if(oPr.TableCellBorders){
                                     if(oPr.TableCellBorders.Bottom && oPr.TableCellBorders.Bottom.Unifill){
                                         oPr.TableCellBorders.Bottom.Unifill.check(oTheme, oColorMap);
                                         RGBA = oPr.TableCellBorders.Bottom.Unifill.getRGBAColor();
-                                        oPr.TableCellBorders.Bottom.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                                        oPr.TableCellBorders.Bottom.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                                     }
 
                                     if(oPr.TableCellBorders.Left && oPr.TableCellBorders.Left.Unifill){
                                         oPr.TableCellBorders.Left.Unifill.check(oTheme, oColorMap);
                                         RGBA = oPr.TableCellBorders.Left.Unifill.getRGBAColor();
-                                        oPr.TableCellBorders.Left.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                                        oPr.TableCellBorders.Left.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                                     }
                                     if(oPr.TableCellBorders.Right && oPr.TableCellBorders.Right.Unifill){
                                         oPr.TableCellBorders.Right.Unifill.check(oTheme, oColorMap);
                                         RGBA = oPr.TableCellBorders.Right.Unifill.getRGBAColor();
-                                        oPr.TableCellBorders.Right.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                                        oPr.TableCellBorders.Right.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                                     }
                                     if(oPr.TableCellBorders.Top && oPr.TableCellBorders.Top.Unifill){
                                         oPr.TableCellBorders.Top.Unifill.check(oTheme, oColorMap);
                                         RGBA = oPr.TableCellBorders.Top.Unifill.getRGBAColor();
-                                        oPr.TableCellBorders.Top.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                                        oPr.TableCellBorders.Top.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                                     }
                                 }
                             }
@@ -1384,6 +1388,122 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
         if(this.graphicObject && this.graphicObject.Document_CreateFontMap) {
             this.graphicObject.Document_CreateFontMap(oMap);
         }
+    };
+
+    CGraphicFrame.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "xfrm": {
+                let xfrm = new AscFormat.CXfrm();
+                xfrm.fromXml(reader);
+                if(!this.spPr) {
+                    this.setSpPr(new AscFormat.CSpPr());
+                }
+                this.spPr.setXfrm(xfrm);
+                break;
+            }
+            case "graphic": {
+                let graphic = new AscFormat.CT_GraphicalObject(this);
+                graphic.fromXml(reader);
+                let graphicObject = graphic.GraphicData && graphic.GraphicData.graphicObject;
+                if (graphicObject) {
+                    if(!(graphicObject instanceof AscCommonWord.CTable)) {
+                        graphicObject.setBDeleted(false);
+                        graphicObject.setParent(this);
+                        this.setGraphicObject(graphicObject);
+                    }
+                }
+                break;
+            }
+            case "nvGraphicFramePr": {
+                let oPr = new AscFormat.UniNvPr();
+                oPr.fromXml(reader);
+                this.setNvSpPr(oPr);
+                this.setLocks(oPr.getLocks());
+                break;
+            }
+        }
+    };
+    CGraphicFrame.prototype.getSpTreeDrawing = function () {
+        if(this.isTable()) {
+            return this;
+        }
+        else {
+            let oGraphicObject = this.graphicObject;
+            if(oGraphicObject) {
+                if(oGraphicObject instanceof AscFormat.CT_GraphicalObject) {
+                    let oGraphicData = oGraphicObject.GraphicData;
+                    if(oGraphicData) {
+                        let oDrawing = oGraphicData.graphicObject;
+                        if(oDrawing) {
+                            return oDrawing;
+                        }
+                    }
+                }
+                else {
+                    return oGraphicObject;
+                }
+            }
+            return null;
+        }
+    };
+    CGraphicFrame.prototype.fromXml = function(reader, name) {
+        AscFormat.CGraphicObjectBase.prototype.fromXml.call(this, reader, name);
+
+        if(this.nvGraphicFramePr) {
+            let oSpTreeDrawing = this.getSpTreeDrawing();
+            if(oSpTreeDrawing && oSpTreeDrawing !== this) {
+                if(oSpTreeDrawing.setNvSpPr) {
+                    oSpTreeDrawing.setNvSpPr(this.nvGraphicFramePr.createDuplicate());
+                }
+            }
+        }
+    };
+	CGraphicFrame.prototype.toXml = function(writer, name) {
+        let sName = name || "p:graphicFrame";
+		var context = writer.context;
+		var objectId = context.objectId++;
+		writer.WriteXmlNodeStart(sName);
+		writer.WriteXmlAttributesEnd();
+
+		var ns = AscCommon.StaxParser.prototype.GetNSFromNodeName(sName);
+
+
+        let oSpTreeDrawing = this.getSpTreeDrawing();
+        if(oSpTreeDrawing) {
+            let oUniNvPr = oSpTreeDrawing.getUniNvProps();
+            if(oUniNvPr) {
+                oUniNvPr.toXmlGrFrame(writer);
+            }
+            writer.WriteXmlNullable(oSpTreeDrawing.spPr && oSpTreeDrawing.spPr.xfrm, ns + "xfrm");
+        }
+        let oGraphicObject;
+        if(this.isTable()) {
+            oGraphicObject =  new AscFormat.CT_GraphicalObject(this);
+            oGraphicObject.GraphicData = new  AscFormat.CT_GraphicalObjectData(this);
+            oGraphicObject.GraphicData.graphicObject = this.graphicObject;
+            oGraphicObject.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/table";
+        }
+        else {
+            oGraphicObject = this.graphicObject;
+        }
+		writer.WriteXmlNullable(oGraphicObject, "a:graphic");
+		writer.WriteXmlNodeEnd(sName);
+	};
+
+    CGraphicFrame.prototype.static_CreateGraphicFrameFromDrawing = function (oDrawing) {
+        let Graphic = new AscFormat.CT_GraphicalObject();
+        Graphic.Namespace = ' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"';
+        Graphic.GraphicData = new AscFormat.CT_GraphicalObjectData();
+        if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace)
+            Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart";
+        else
+            Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2010/slicer";
+        Graphic.GraphicData.graphicObject = oDrawing;
+
+        let newGraphicObject = AscFormat.ExecuteNoHistory(function(){return new AscFormat.CGraphicFrame();}, this, []);
+        newGraphicObject.spPr = oDrawing.spPr;
+        newGraphicObject.graphicObject = Graphic;
+        return newGraphicObject;
     };
 
     function ConvertToWordTableBorder(oBorder) {
