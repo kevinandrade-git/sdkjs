@@ -2648,6 +2648,13 @@
             }
         };
 
+
+		if (name) {
+			this.wb.cellEditor.close(false);
+			this.wb.insertInCellEditor(name, Asc.c_oAscPopUpSelectorType.Func, true);
+			name = undefined;
+		}
+
 		var ws = this.getActiveWS();
         var addFunction = function (name, cellEditMode) {
         	t.setWizardMode(true);
