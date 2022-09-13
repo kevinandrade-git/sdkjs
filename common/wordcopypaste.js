@@ -2299,6 +2299,8 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 	this.pasteTextIntoList;
 
 	this.rtfImages;
+
+	this.aNeedRecalcImgSize;
 }
 PasteProcessor.prototype =
 {
@@ -5033,6 +5035,98 @@ PasteProcessor.prototype =
 		var fPasteHtmlWordCallback = function (fonts, images) {
 			var executePasteWord = function () {
 				if (false === oThis.bNested) {
+					if (oThis.aNeedRecalcImgSize) {
+						for (var i = 0; i < oThis.aNeedRecalcImgSize.length; i++) {
+							if (PasteElementsId.g_bIsDocumentCopyPaste) {
+								var drawing = oThis.aNeedRecalcImgSize[i].drawing;
+								var img = oThis.aNeedRecalcImgSize[i].img;
+								if (drawing && img) {
+									var imgSize = oThis._getImgSize(img);
+
+
+
+									/*if (bPresentation) {
+										if (nWidth && nHeight && sSrc) {
+											sSrc = oThis.oImages[sSrc];
+											if (sSrc) {
+												var image = AscFormat.DrawingObjectsController.prototype.createImage(sSrc, 0, 0, nWidth,
+													nHeight);
+												arrImages.push(image);
+											}
+										}
+										return bAddParagraph;
+									} else {
+										if (PasteElementsId.g_bIsDocumentCopyPaste) {
+											bAddParagraph = oThis._Decide_AddParagraph(node, pPr, bAddParagraph);
+
+											if (nWidth && nHeight && sSrc) {
+												sSrc = oThis.oImages[sSrc];
+												if (sSrc) {
+													//вписываем в oThis.dMaxWidth
+													var bUseScaleKoef = oThis.bUseScaleKoef;
+													var dScaleKoef = oThis.dScaleKoef;
+													if (nWidth * dScaleKoef > oThis.dMaxWidth) {
+														dScaleKoef = dScaleKoef * oThis.dMaxWidth / nWidth;
+														bUseScaleKoef = true;
+													}
+
+													var oTargetDocument = oThis.oDocument;
+													var oDrawingDocument = oThis.oDocument.DrawingDocument;
+													if (oTargetDocument && oDrawingDocument) {
+														//если добавляем изображение в гиперссылку, то кладём его в отдельный ран и делаем не подчёркнутым
+														if (oThis.oCurHyperlink) {
+															oThis._CommitElemToParagraph(oThis.oCurRun);
+															oThis.oCurRun = new ParaRun(oThis.oCurPar);
+															oThis.oCurRun.Pr.Underline = false;
+														}
+
+														if(oThis.apiEditor && oThis.apiEditor.isDocumentEditor) {
+															if(oThis.oLogicDocument && oThis.oLogicDocument.GetColumnSize ) {
+
+																var oColumnSize = oThis.oLogicDocument.GetColumnSize();
+																if(oColumnSize) {
+																	if(nWidth > oColumnSize.W || nHeight > oColumnSize.H) {
+																		if(oColumnSize.W > 0 && oColumnSize.H > 0)  {
+																			var dScaleW = oColumnSize.W/nWidth;
+																			var dScaleH = oColumnSize.H/nHeight;
+																			var dScale = Math.min(dScaleW, dScaleH);
+																			nWidth *= dScale;
+																			nHeight *= dScale;
+																		}
+																	}
+																}
+															}
+														}
+
+														var Drawing = CreateImageFromBinary(sSrc, nWidth, nHeight);
+														if(!oThis.aNeedRecalcImgSize) {
+															oThis.aNeedRecalcImgSize = [];
+														}
+														oThis.aNeedRecalcImgSize.push({drawing: Drawing, img: node});
+
+														oThis._AddToParagraph(Drawing);
+
+														if (oThis.oCurHyperlink) {
+															oThis.oCurRun = new ParaRun(oThis.oCurPar);
+														}
+													}
+												}
+											}
+
+											return bAddParagraph;
+										} else {*/
+
+
+
+									if (imgSize) {
+										drawing.GraphicObj.spPr.xfrm.setExtX(imgSize.width);
+										drawing.GraphicObj.spPr.xfrm.setExtY(imgSize.height);
+									}
+								}
+							} else {
+							}
+						}
+					}
 					oThis.InsertInDocument();
 				}
 				if (false !== bTurnOffTrackRevisions) {
@@ -9290,53 +9384,11 @@ PasteProcessor.prototype =
 		};
 
 		var parseImage = function () {
-
 			//get width/height
-			var nWidth = parseInt(node.getAttribute("width"));
-			var nHeight = parseInt(node.getAttribute("height"));
-			if (!nWidth || !nHeight) {
-				var computedStyle = oThis._getComputedStyle(node);
-				nWidth = parseInt(oThis._getStyle(node, computedStyle, "width"));
-				nHeight = parseInt(oThis._getStyle(node, computedStyle, "height"));
-			}
-
-			//TODO пересмотреть! node.getAttribute("width") в FF возврашает "auto" -> изображения в FF не всталяются
-			if ((!nWidth || !nHeight)) {
-				if (AscBrowser.isMozilla || AscBrowser.isIE) {
-					nWidth = parseInt(node.width);
-					nHeight = parseInt(node.height);
-				} else if (AscBrowser.isChrome) {
-					if (nWidth && !nHeight) {
-						nHeight = nWidth;
-					} else if (!nWidth && nHeight) {
-						nWidth = nHeight;
-					} else {
-						nWidth = parseInt(node.width);
-						nHeight = parseInt(node.height);
-					}
-				}
-			}
-
+			var sizeObj = oThis._getImgSize(node);
+			var nWidth = sizeObj.width;
+			var nHeight = sizeObj.height;
 			var sSrc = node.getAttribute("src");
-
-			if (isNaN(nWidth)) nWidth = 0;
-			if (isNaN(nHeight)) nHeight = 0;
-
-			if (sSrc && (nWidth === 0 || nHeight === 0)) {
-				var img_prop = new Asc.asc_CImgProperty();
-				img_prop.asc_putImageUrl(sSrc);
-				var or_sz = img_prop.asc_getOriginSize(window['Asc']['editor'] || window['editor']);
-				nWidth = or_sz.Width;
-				nHeight = or_sz.Height;
-			} else {
-				nWidth *= AscCommon.g_dKoef_pix_to_mm;
-				nHeight *= AscCommon.g_dKoef_pix_to_mm;
-			}
-
-			if (!nWidth)
-				nWidth = oThis.defaultImgWidth;
-			if (!nHeight)
-				nHeight = oThis.defaultImgHeight;
 
 			if (bPresentation) {
 				if (nWidth && nHeight && sSrc) {
@@ -9362,13 +9414,7 @@ PasteProcessor.prototype =
 								dScaleKoef = dScaleKoef * oThis.dMaxWidth / nWidth;
 								bUseScaleKoef = true;
 							}
-							//закомментировал, потому что при вставке получаем изображения измененного размера
-							/*if(bUseScaleKoef)
-							 {
-							 var dTemp = nWidth;
-							 nWidth *= dScaleKoef;
-							 nHeight *= dScaleKoef;
-							 }*/
+
 							var oTargetDocument = oThis.oDocument;
 							var oDrawingDocument = oThis.oDocument.DrawingDocument;
 							if (oTargetDocument && oDrawingDocument) {
@@ -9396,16 +9442,18 @@ PasteProcessor.prototype =
                                         }
                                     }
                                 }
+
 								var Drawing = CreateImageFromBinary(sSrc, nWidth, nHeight);
-								// oTargetDocument.DrawingObjects.Add( Drawing );
+								if(!oThis.aNeedRecalcImgSize) {
+									oThis.aNeedRecalcImgSize = [];
+								}
+								oThis.aNeedRecalcImgSize.push({drawing: Drawing, img: node});
 
 								oThis._AddToParagraph(Drawing);
 
 								if (oThis.oCurHyperlink) {
 									oThis.oCurRun = new ParaRun(oThis.oCurPar);
 								}
-
-								//oDocument.AddInlineImage(nWidth, nHeight, img);
 							}
 						}
 					}
@@ -10102,6 +10150,66 @@ PasteProcessor.prototype =
 			}
 			this.needAddCommentEnd = null;
 		}
+	},
+
+	_getImgSize: function (node) {
+		if (!node) {
+			return;
+		}
+		var oThis = this;
+		var nWidth = parseInt(node.getAttribute("width"));
+		var nHeight = parseInt(node.getAttribute("height"));
+		if (!nWidth || !nHeight) {
+			var computedStyle = oThis._getComputedStyle(node);
+			nWidth = parseInt(oThis._getStyle(node, computedStyle, "width"));
+			nHeight = parseInt(oThis._getStyle(node, computedStyle, "height"));
+		}
+
+		//TODO пересмотреть! node.getAttribute("width") в FF возврашает "auto" -> изображения в FF не всталяются
+		if ((!nWidth || !nHeight)) {
+			if (AscBrowser.isMozilla || AscBrowser.isIE) {
+				nWidth = parseInt(node.width);
+				nHeight = parseInt(node.height);
+			} else if (AscBrowser.isChrome) {
+				if (nWidth && !nHeight) {
+					nHeight = nWidth;
+				} else if (!nWidth && nHeight) {
+					nWidth = nHeight;
+				} else {
+					nWidth = parseInt(node.width);
+					nHeight = parseInt(node.height);
+				}
+			}
+		}
+
+		var sSrc = node.getAttribute("src");
+
+		if (isNaN(nWidth)) {
+			nWidth = 0;
+		}
+		if (isNaN(nHeight)) {
+			nHeight = 0;
+		}
+
+		if (sSrc && (nWidth === 0 || nHeight === 0)) {
+			var img_prop = new Asc.asc_CImgProperty();
+			img_prop.asc_putImageUrl(sSrc);
+			var or_sz = img_prop.asc_getOriginSize(window['Asc']['editor'] || window['editor']);
+			nWidth = or_sz.Width;
+			nHeight = or_sz.Height;
+		} else {
+			nWidth *= AscCommon.g_dKoef_pix_to_mm;
+			nHeight *= AscCommon.g_dKoef_pix_to_mm;
+		}
+
+		if (!nWidth) {
+			nWidth = oThis.defaultImgWidth;
+		}
+		if (!nHeight) {
+			nHeight = oThis.defaultImgHeight;
+		}
+
+		return {width: nWidth, height: nHeight};
 	},
 
 	_applyStylesToTable: function (cTable, cStyle) {
