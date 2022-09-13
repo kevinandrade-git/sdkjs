@@ -5034,6 +5034,10 @@ PasteProcessor.prototype =
 
 		var fPasteHtmlWordCallback = function (fonts, images) {
 			var executePasteWord = function () {
+
+				oThis._Execute(node, {}, true, true, false);
+				oThis._AddNextPrevToContent(oThis.oDocument);
+
 				if (false === oThis.bNested) {
 					if (oThis.aNeedRecalcImgSize) {
 						for (var i = 0; i < oThis.aNeedRecalcImgSize.length; i++) {
@@ -5119,8 +5123,8 @@ PasteProcessor.prototype =
 
 
 									if (imgSize) {
-										drawing.GraphicObj.spPr.xfrm.setExtX(imgSize.width);
-										drawing.GraphicObj.spPr.xfrm.setExtY(imgSize.height);
+										//drawing.GraphicObj.spPr.xfrm.setExtX(imgSize.width * 20);
+										//drawing.GraphicObj.spPr.xfrm.setExtY(imgSize.height * 20);
 									}
 								}
 							} else {
@@ -5175,16 +5179,16 @@ PasteProcessor.prototype =
 			if (false !== bTurnOffTrackRevisions) {
 				oThis.api.WordControl.m_oLogicDocument.SetLocalTrackRevisions(bTurnOffTrackRevisions);
 			}
-			//на время заполнения контента для вставки отключаем историю
-			oThis._Execute(node, {}, true, true, false);
-			oThis._AddNextPrevToContent(oThis.oDocument);
 
 			if (isPasteTextIntoList) {
-				oThis._pasteText(oThis._getTextFromContent(oThis.aContent, {NewLineParagraph: true, Numbering: false}));
-				return;
-			}
+				//на время заполнения контента для вставки отключаем историю
+				oThis._Execute(node, {}, true, true, false);
+				oThis._AddNextPrevToContent(oThis.oDocument);
 
-			oThis.api.pre_Paste(fonts, images, executePasteWord);
+				oThis._pasteText(oThis._getTextFromContent(oThis.aContent, {NewLineParagraph: true, Numbering: false}));
+			} else {
+				oThis.api.pre_Paste(fonts, images, executePasteWord);
+			}
 		};
 
 		this.oRootNode = node;
