@@ -1622,6 +1622,7 @@
   };
   DocsCoApi.prototype._onAuthChanges = function(data) {
     this._authChanges.push(data["changes"]);
+    this._send({'type': 'authChangesAck'});
   };
   DocsCoApi.prototype._updateAuthChanges = function() {
     //todo apply changes with chunk on arrival
@@ -1724,7 +1725,8 @@
       'timezoneOffset': (new Date()).getTimezoneOffset(),
       'coEditingMode': this.coEditingMode,
       'jwtOpen': this.jwtOpen,
-      'jwtSession': this.jwtSession
+      'jwtSession': this.jwtSession,
+      'supportAuthChangesAck': true
     });
   };
 
