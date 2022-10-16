@@ -8485,7 +8485,13 @@
 				for (var rowItemsXIndex = 0; rowItemsXIndex < rowItem.x.length; ++rowItemsXIndex) {
 					fieldIndex = rowFields[rowR + rowItemsXIndex].asc_getIndex();
 
-					if (!traversal.setRowIndex(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props)) {
+					for (let i = 0; i < dataFields.length; i += 1) {
+						if (fieldIndex === dataFields[i].baseField) {
+							traversal.diffRowIndex = rowR + rowItemsXIndex;
+						}
+					}
+
+					if (!traversal.setRowIndex(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, rowFields.length, props)) {
 						break;
 					}
 				}
@@ -8499,8 +8505,9 @@
 
 				for (var colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
 					var colItem = colItems[colItemsIndex];
+					traversal.setDataField(rowItem, colItem, dataFields);
 					var colR = colItem.getR();
-					traversal.setStartColIndex(pivotFields, fieldIndex, colItem, colR, colFields);
+					traversal.setStartColIndex(pivotFields, fieldIndex, colItem, colR, colFields, rowItem);
 					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props);
 					if (oCellValue) {
 						var cells = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
@@ -8519,7 +8526,7 @@
 		this._updatePivotTableCellsRowColLables(pivotTable);
 		var rowFieldsOffset = this._updatePivotTableCellsRowHeaderLabels(pivotTable);
 		this._updatePivotTableCellsRowColLables(pivotTable, rowFieldsOffset);
-		this._updatePivotTableCellsData(pivotTable, dataRow);
+		this._updatePivotTableCellsData2(pivotTable, dataRow);
 	};
 	Worksheet.prototype.updatePivotTablesStyle = function (range, canModifyDocument) {
 		var t = this;

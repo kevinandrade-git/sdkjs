@@ -310,7 +310,53 @@ PivotDataElem.prototype.resetTotal = function (dataLength) {
 	for (var i = 0; i < this.total.length; ++i) {
 		this.total[i].reset();
 	}
-}
+};
+PivotDataElem.prototype.isEmpty = function (dataLength) {
+	return -1 === this.total.findIndex(function(elem) {
+		return !elem.isEmpty();
+	});
+};
+PivotDataElem.prototype.cloneShallow = function () {
+	let res = new PivotDataElem();
+	res.subtotal = Object.assign({}, this.subtotal);
+	res.vals = Object.assign({}, this.vals);
+	res.total = this.total.map((x) => x);
+	return res;
+};
+PivotDataElem.prototype.mergeForDiff = function (elem, diffSubtotal, mergeSubtotal, height) {
+	if(!elem) {
+		return this;
+	}
+	let res = this.cloneShallow();
+	if(mergeSubtotal) {
+		if (height > 1) {
+			for (let x in res.subtotal) {
+				if ((res.subtotal.hasOwnProperty(x) && diffSubtotal.subtotal.hasOwnProperty(x)) && elem.subtotal.hasOwnProperty(x)) {
+					res.subtotal[x] = res.subtotal[x].mergeForDiff(elem.subtotal[x], diffSubtotal.subtotal[x],mergeSubtotal, height - 1);
+				}
+			}
+		}
+		for(let x in elem.subtotal) {
+			if(elem.subtotal.hasOwnProperty(x) && !res.subtotal.hasOwnProperty(x) && !diffSubtotal.subtotal.hasOwnProperty(x)) {
+				res.subtotal[x] = elem.subtotal[x].cloneShallow();
+			}
+		}
+	} else {
+		if (height > 1) {
+			for (let x in res.vals) {
+				if ((res.vals.hasOwnProperty(x) && diffSubtotal.vals.hasOwnProperty(x)) && elem.vals.hasOwnProperty(x)) {
+					res.vals[x] = res.vals[x].mergeForDiff(elem.vals[x], diffSubtotal.vals[x], mergeSubtotal, height - 1);
+				}
+			}
+		}
+		for(let x in elem.vals) {
+			if(elem.vals.hasOwnProperty(x) && !res.vals.hasOwnProperty(x) && !diffSubtotal.vals.hasOwnProperty(x)) {
+				res.vals[x] = elem.vals[x].cloneShallow();
+			}
+		}
+	}
+	return res;
+};
 function PivotDataLocation(ws, bbox, headings) {
 	this.ws = ws;
 	this.bbox = bbox;
@@ -15565,25 +15611,34 @@ PivotLayout.prototype.getMeasureFld = function() {
 };
 
 function DataRowTraversal() {
+	this.dataRow = null;
 	this.cur = null;
 	this.curRowCache = null;
 	this.curColCache = null;
+	this.curSubtotal = null;
+	this.curColSubtotalCache = null;
+
+	this.dataField = null;
 
 	//todo diffRowIndex from dataField.baseField. multiple dataFields
-	this.diffRowIndex = 0;
+	this.diffRowIndex = null;
 	this.diffColIndex = null;
 
 	this.diffBase = null;
 	this.diffBaseRowCache = null;
 	this.diffBaseColCache = null;
+	this.diffSubtotal = null;
+	this.diffSubtotalColCache = null;
 }
 DataRowTraversal.prototype.initRow = function(dataRow) {
+	this.dataRow = dataRow;
 	this.cur = dataRow;
 	this.curRowCache = [dataRow];
 	this.curColCache = null;
+	this.curColSubtotalCache = null;
 };
 DataRowTraversal.prototype.cleanDiff = function() {
-	this.diffBaseRowCache = this.diffBaseColCache = this.diffBase = undefined;
+	this.diffBaseRowCache = this.diffBaseColCache = this.diffSubtotalColCache = this.diffBase = this.diffSubtotal = undefined;
 };
 DataRowTraversal.prototype.setStartRowIndex = function(rowR) {
 	this.cur = this.curRowCache[rowR];
@@ -15595,7 +15650,7 @@ DataRowTraversal.prototype.setStartRowIndex = function(rowR) {
 		this.diffBase = null;
 	}
 };
-DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props) {
+DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, rowFieldsLen, props) {
 	if (this.cur && AscCommonExcel.st_VALUES !== fieldIndex) {
 		let field = pivotFields[fieldIndex];
 		props.rowFieldSubtotal = field.getSubtotalType();
@@ -15610,11 +15665,17 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 		} else if (null !== this.diffRowIndex && this.diffRowIndex === rowR + rowItemsXIndex) {
 			this.diffBaseRowCache = [];
 			//todo all types. here only next
-			fieldItem = field.getItem(valueIndex + 1);
-			if (fieldItem && fieldItem.t === Asc.c_oAscItemType.Data) {
-				this.diffBase = oldCur.vals[fieldItem.x];
-			} else {
-				this.cleanDiff();
+			this.diffBase = null;
+			for (let i = valueIndex + 1; i < field.getItemsCount(); ++i) {
+				fieldItem = field.getItem(i);
+				if (fieldItem && fieldItem.t === Asc.c_oAscItemType.Data) {
+					let diff = oldCur.vals[fieldItem.x];
+					if (!this.diffBase) {
+						this.diffBase = diff;
+					} else {
+						this.diffBase = this.diffBase.mergeForDiff(diff, this.diffBase, false, rowFieldsLen - (rowR + rowItemsXIndex));
+					}
+				}
 			}
 		} else if (this.diffBase) {
 			this.diffBase = this.diffBase.vals[fieldItem.x];
@@ -15628,15 +15689,35 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 	}
 	return !!this.cur;
 };
+/**
+ * @param {CT_I} rowItem
+ * @param {CT_I} colItem
+ * @param {CT_DataField[]} dataFields
+ */
+DataRowTraversal.prototype.setDataField = function(rowItem, colItem, dataFields) {
+	var _rowItem = rowItem || {};
+	var _colItem = colItem || {};
+	var _dataIndex = Math.max(_rowItem.i || 0, _colItem.i || 0);
+	this.dataField = dataFields[_dataIndex];
+};
 DataRowTraversal.prototype.initCol = function() {
 	this.curColCache = [this.cur];
+	this.curColSubtotalCache = [this.dataRow];
 	if (this.diffBase) {
 		this.diffBaseColCache = [this.diffBase];
+	} else {
+		this.diffBaseColCache = this.diffSubtotalColCache = undefined;
 	}
 };
 DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, colItem, colR, colFields) {
 	this.cur = this.curColCache[colR];
+	this.curSubtotal = this.curColSubtotalCache[colR];
 
+	if (this.diffSubtotalColCache) {
+		this.diffSubtotal = this.diffSubtotalColCache[colR];
+	} else {
+		this.diffSubtotal = null;
+	}
 	if (null !== this.diffColIndex && this.diffColIndex >= colR) {
 		this.cleanDiff();
 	} else if (this.diffBaseColCache) {
@@ -15645,39 +15726,73 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 		this.diffBase = null;
 	}
 
-	if (this.cur && Asc.c_oAscItemType.Grand !== colItem.t && colFields) {
+	if (Asc.c_oAscItemType.Grand !== colItem.t && colFields) {
 		for (var colItemsXIndex = 0; colItemsXIndex < colItem.x.length; ++colItemsXIndex) {
 			fieldIndex = colFields[colR + colItemsXIndex].asc_getIndex();
+			if (fieldIndex === this.dataField.baseField) {
+				this.diffColIndex = colR + colItemsXIndex;
+			}
 			if (AscCommonExcel.st_VALUES !== fieldIndex) {
 				let field = pivotFields[fieldIndex];
 				let valueIndex = colItem.x[colItemsXIndex].getV();
 				let fieldItem = field.getItem(valueIndex);
 				let oldCur = this.cur;
-				this.cur = this.cur.subtotal[fieldItem.x];
-
+				if (this.cur) {
+					this.cur = this.cur.subtotal[fieldItem.x];
+				}
+				let oldCurSubtotal = this.curSubtotal;
+				if (this.curSubtotal) {
+					this.curSubtotal = this.curSubtotal.subtotal[fieldItem.x];
+				}
 				if (null !== this.diffColIndex && this.diffColIndex > colR + colItemsXIndex) {
 					this.cleanDiff();
 				} else if (null !== this.diffColIndex && this.diffColIndex === colR + colItemsXIndex) {
 					this.diffBaseColCache = [];
+					this.diffSubtotalColCache = [];
 					//todo all types. here only next
-					fieldItem = field.getItem(valueIndex + 1);
-					if (fieldItem && fieldItem.t === Asc.c_oAscItemType.Data) {
-						this.diffBase = oldCur.subtotal[fieldItem.x];
-					} else {
-						this.cleanDiff();
+					this.diffBase = this.diffSubtotal = null;
+					for (let i = valueIndex + 1; i < field.getItemsCount(); ++i) {
+						fieldItem = field.getItem(i);
+						if (fieldItem && fieldItem.t === Asc.c_oAscItemType.Data) {
+							let diff = oldCur && oldCur.subtotal[fieldItem.x];
+							if (!this.diffBase) {
+								this.diffBase = diff;
+							} else {
+								this.diffBase = this.diffBase.mergeForDiff(diff, this.diffSubtotal, true, colFields.length - (colR + colItemsXIndex));
+							}
+							let diffSubtotal = oldCurSubtotal.subtotal[fieldItem.x];
+							if (!this.diffSubtotal) {
+								this.diffSubtotal = diffSubtotal;
+								if(diffSubtotal && !this.diffBase) {
+									this.diffBase = new PivotDataElem(diffSubtotal.total.length);
+								}
+							} else {
+								this.diffSubtotal = this.diffSubtotal.mergeForDiff(diffSubtotal, this.diffSubtotal, true,colFields.length - (colR + colItemsXIndex));
+							}
+						}
 					}
-				} else if (this.diffBase) {
-					this.diffBase = this.diffBase.subtotal[fieldItem.x];
+				} else{
+					if (this.diffBase) {
+						this.diffBase = this.diffBase.subtotal[fieldItem.x];
+					}
+					if (this.diffSubtotal) {
+						this.diffSubtotal = this.diffSubtotal.subtotal[fieldItem.x];
+					}
 				}
 			}
 			this.curColCache.length = colR + colItemsXIndex + 1;
 			this.curColCache[this.curColCache.length] = this.cur;
+
+			this.curColSubtotalCache.length = colR + colItemsXIndex + 1;
+			this.curColSubtotalCache[this.curColSubtotalCache.length] = this.curSubtotal;
+
 			if (this.diffBaseColCache) {
 				this.diffBaseColCache.length = colR + colItemsXIndex + 1;
 				this.diffBaseColCache[this.diffBaseColCache.length] = this.diffBase;
 			}
-			if (!this.cur) {
-				break;
+			if(this.diffSubtotalColCache) {
+				this.diffSubtotalColCache.length = colR + colItemsXIndex + 1;
+				this.diffSubtotalColCache[this.diffSubtotalColCache.length] = this.diffSubtotal;
 			}
 		}
 	}
@@ -15697,20 +15812,25 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 			}
 			break;
 		case Asc.c_oAscShowDataAs.Difference:
-			if (this.cur && this.diffBase) {
+			//empty possible in case of null !== this.diffColIndex
+			if (this.cur && this.diffBase && !this.diffBase.isEmpty()) {
 				let BaseTotal = this.diffBase.total[dataIndex];
 				let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 				total = this.cur.total[dataIndex];
 				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 				oCellValue.number = oCellValue.number - BaseOCellValue.number;
-			} else if (this.diffBaseRowCache || this.diffBaseColCache) {
+			} else if(this.diffBase && !this.diffBase.isEmpty()) {
+				total = this.diffBase.total[dataIndex];
+				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				oCellValue.number *= -1;
+			} else if((null !== this.diffRowIndex && this.diffBaseColCache) || (null !== this.diffColIndex && this.diffSubtotal)) {
 				if (this.cur) {
 					total = this.cur.total[dataIndex];
 					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				} else if(this.diffBase) {
-					total = this.diffBase.total[dataIndex];
-					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-					oCellValue.number *= -1;
+				} else {
+					oCellValue = new AscCommonExcel.CCellValue();
+					oCellValue.type = AscCommon.CellValueType.Number;
+					oCellValue.number = 0;
 				}
 			}
 			break;
