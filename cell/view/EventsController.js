@@ -315,7 +315,7 @@
 				return false;
 			}
 
-			if(this.targetInfo && (this.targetInfo.target === c_oTargetType.MoveResizeRange ||
+			if(!this.view.Api.isMobileVersion && this.targetInfo && (this.targetInfo.target === c_oTargetType.MoveResizeRange ||
 				this.targetInfo.target === c_oTargetType.MoveRange ||
 				this.targetInfo.target === c_oTargetType.FilterObject ||
 				this.targetInfo.target === c_oTargetType.TableSelectionChange))
@@ -1601,6 +1601,17 @@
 				return;
 			}
 
+			if (this.view.Api.isMobileVersion) {
+				t.clickCounter.mouseDownEvent(coord.x, coord.y, button);
+				event.ClickCount = t.clickCounter.clickCount;
+				if (0 === event.ClickCount % 2) {
+					t.isDblClickInMouseDown = true;
+					return;
+				}
+			}
+
+
+
 
 			if (2 === event.detail) {
 				// Это означает, что это MouseDown для dblClick эвента (его обрабатывать не нужно)
@@ -1783,6 +1794,18 @@
                 }
 
 				return true;
+			}
+
+			if (this.clickCounter.clickCount >= 2 && this.view.Api.isMobileVersion) {
+				//t._topLineGotFocus.apply(t, arguments)
+				//this.doMouseDblClick(event);
+				this.view.input.focus();
+
+				/*enterOptions = new AscCommonExcel.CEditorEnterOptions();
+				enterOptions.focus = true;
+				t.handlers.trigger("editCell", enterOptions);*/
+
+				return;
 			}
 
 			if (this.isSelectMode) {
