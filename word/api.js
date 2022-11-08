@@ -6714,6 +6714,13 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetDefaultLanguage);
 			this.WordControl.m_oLogicDocument.SetDefaultLanguage(Lang);
 			this.WordControl.m_oLogicDocument.FinalizeAction();
+
+			if (this.pluginsManager && window["Common"])
+			{
+				let langName = window["Common"]["util"]['LanguageInfo']['getLocalLanguageName'](Lang)[0];
+				if (langName != "")
+					this.pluginsManager.language = langName;
+			}
 		}
 	};
 
@@ -7986,6 +7993,14 @@ background-repeat: no-repeat;\
 				this.OpenDocument3(file.url, file.data);
 			else
 				this.OpenDocument(file.url, file.data);
+		}
+		
+		if (editor.WordControl.m_oLogicDocument && editor.pluginsManager && window["Common"])
+		{
+			let langCode = editor.WordControl.m_oLogicDocument.GetDefaultLanguage();
+			let langName = window["Common"]["util"]['LanguageInfo']['getLocalLanguageName'](langCode)[0];
+			if (langName != "")
+				editor.pluginsManager.language = langName;
 		}
 	};
 

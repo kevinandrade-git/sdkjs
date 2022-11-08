@@ -5951,6 +5951,14 @@ background-repeat: no-repeat;\
 		} else {
 			this.OpenDocumentFromBin(file.url, file.data);
 		}
+
+		if (editor.WordControl.m_oLogicDocument && editor.pluginsManager && window["Common"])
+		{
+			let langCode = editor.WordControl.m_oLogicDocument.GetDefaultLanguage();
+			let langName = window["Common"]["util"]['LanguageInfo']['getLocalLanguageName'](langCode)[0];
+			if (langName != "")
+				editor.pluginsManager.language = langName;
+		}
 	};
 
 	asc_docs_api.prototype.get_PresentationWidth  = function()
@@ -6502,6 +6510,13 @@ background-repeat: no-repeat;\
             History.Create_NewPoint(AscDFH.historydescription_Document_SetDefaultLanguage);
             editor.WordControl.m_oLogicDocument.SetDefaultLanguage(Lang);
 			this.checkChangesSize();
+
+			if (this.pluginsManager && window["Common"])
+			{
+				let langName = window["Common"]["util"]['LanguageInfo']['getLocalLanguageName'](Lang)[0];
+				if (langName != "")
+					this.pluginsManager.language = langName;
+			}
         }
     };
 
