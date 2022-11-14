@@ -2812,6 +2812,7 @@
 			this.ignorePrintArea = null;
 
 			this.isOnlyFirstPage = null;
+			this.activeSheetsArray = null;//массив с индексами листов, которые необходимо напечатать
 
 			// ToDo сюда же start и end page index
 
@@ -2823,6 +2824,8 @@
 		asc_CAdjustPrint.prototype.asc_setPageOptionsMap = function (val) { this.pageOptionsMap = val; };
 		asc_CAdjustPrint.prototype.asc_getIgnorePrintArea = function () { return this.ignorePrintArea; };
 		asc_CAdjustPrint.prototype.asc_setIgnorePrintArea = function (val) { this.ignorePrintArea = val; };
+		asc_CAdjustPrint.prototype.asc_getActiveSheetsArray = function () { return this.activeSheetsArray; };
+		asc_CAdjustPrint.prototype.asc_setActiveSheetsArray = function (val) { this.activeSheetsArray = val; };
 
 		/** @constructor */
 		function asc_CLockInfo () {
@@ -3637,6 +3640,8 @@
 		prot["asc_setPageOptionsMap"] = prot.asc_setPageOptionsMap;
 		prot["asc_getIgnorePrintArea"] = prot.asc_getIgnorePrintArea;
 		prot["asc_setIgnorePrintArea"] = prot.asc_setIgnorePrintArea;
+		prot["asc_getActiveSheetsArray"] = prot.asc_getActiveSheetsArray;
+		prot["asc_setActiveSheetsArray"] = prot.asc_setActiveSheetsArray;
 
 		window["AscCommonExcel"].asc_CLockInfo = asc_CLockInfo;
 
