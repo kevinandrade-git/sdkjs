@@ -2814,7 +2814,8 @@
 			this.isOnlyFirstPage = null;
 			this.activeSheetsArray = null;//массив с индексами листов, которые необходимо напечатать
 
-			// ToDo сюда же start и end page index
+			this.startPageIndex = null;
+			this.endPageIndex = null;
 
 			return this;
 		}
@@ -2826,6 +2827,10 @@
 		asc_CAdjustPrint.prototype.asc_setIgnorePrintArea = function (val) { this.ignorePrintArea = val; };
 		asc_CAdjustPrint.prototype.asc_getActiveSheetsArray = function () { return this.activeSheetsArray; };
 		asc_CAdjustPrint.prototype.asc_setActiveSheetsArray = function (val) { this.activeSheetsArray = val; };
+		asc_CAdjustPrint.prototype.asc_getStartPageIndex = function () { return this.startPageIndex; };
+		asc_CAdjustPrint.prototype.asc_setStartPageIndex = function (val) { this.startPageIndex = val; };
+		asc_CAdjustPrint.prototype.asc_getEndPageIndex = function () { return this.endPageIndex; };
+		asc_CAdjustPrint.prototype.asc_getEndPageIndex = function (val) { this.endPageIndex = val; };
 
 		/** @constructor */
 		function asc_CLockInfo () {
@@ -3642,6 +3647,10 @@
 		prot["asc_setIgnorePrintArea"] = prot.asc_setIgnorePrintArea;
 		prot["asc_getActiveSheetsArray"] = prot.asc_getActiveSheetsArray;
 		prot["asc_setActiveSheetsArray"] = prot.asc_setActiveSheetsArray;
+		prot["asc_getStartPageIndex"] = prot.asc_getStartPageIndex;
+		prot["asc_setStartPageIndex"] = prot.asc_setStartPageIndex;
+		prot["asc_getEndPageIndex"] = prot.asc_getEndPageIndex;
+		prot["asc_setEndPageIndex"] = prot.asc_setEndPageIndex;
 
 		window["AscCommonExcel"].asc_CLockInfo = asc_CLockInfo;
 

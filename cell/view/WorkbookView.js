@@ -3316,7 +3316,7 @@
   };
 
   // Печать
-  WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer) {
+  WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer, adjustPrint) {
 	  var pdfPrinter;
 	  var t = this;
 	  this._executeWithoutZoom(function () {
@@ -3332,7 +3332,9 @@
 		  } else {
 			  var indexWorksheet = -1;
 			  var indexWorksheetTmp = -1;
-			  for (var i = 0; i < printPagesData.arrPages.length; ++i) {
+			  var startIndex = adjustPrint && adjustPrint.startPageIndex != null ? adjustPrint.startPageIndex : 0;
+			  var endIndex = adjustPrint && adjustPrint.endPageIndex != null  ? adjustPrint.endPageIndex + 1 : printPagesData.arrPages.length;
+			  for (var i = startIndex; i < endIndex; ++i) {
 				  indexWorksheetTmp = printPagesData.arrPages[i].indexWorksheet;
 				  if (indexWorksheetTmp !== indexWorksheet) {
 					  ws = t.getWorksheet(indexWorksheetTmp);
