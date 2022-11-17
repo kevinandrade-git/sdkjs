@@ -2830,7 +2830,7 @@
 		asc_CAdjustPrint.prototype.asc_getStartPageIndex = function () { return this.startPageIndex; };
 		asc_CAdjustPrint.prototype.asc_setStartPageIndex = function (val) { this.startPageIndex = val; };
 		asc_CAdjustPrint.prototype.asc_getEndPageIndex = function () { return this.endPageIndex; };
-		asc_CAdjustPrint.prototype.asc_getEndPageIndex = function (val) { this.endPageIndex = val; };
+		asc_CAdjustPrint.prototype.asc_setEndPageIndex = function (val) { this.endPageIndex = val; };
 
 		/** @constructor */
 		function asc_CLockInfo () {
