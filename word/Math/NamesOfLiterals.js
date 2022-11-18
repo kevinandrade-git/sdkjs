@@ -2195,7 +2195,6 @@
 							)
 							break;
 						case oNamesOfLiterals.spaceLiteral[num]:
-							oContext.Add_Text(oTokens.value);
 							break;
 						case oNamesOfLiterals.mathFontLiteral[num]:
 							ConvertTokens(
