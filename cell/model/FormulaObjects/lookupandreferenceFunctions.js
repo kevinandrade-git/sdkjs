@@ -69,7 +69,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
 	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE, cTAKE,
-		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS);
+		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS, cXMATCH);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cAREAS, cGETPIVOTDATA, cRTD);
@@ -3180,6 +3180,125 @@ function (window, undefined) {
 	cWRAPCOLS.prototype.isXLFN = true;
 	cWRAPCOLS.prototype.Calculate = function (arg) {
 		return wrapRowsCols(arg, arguments[1], true);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cXMATCH() {
+	}
+		
+	//***array-formula***
+	cXMATCH.prototype = Object.create(cBaseFunction.prototype);
+	cXMATCH.prototype.constructor = cXMATCH;
+	cXMATCH.prototype.name = 'XMATCH';
+	cXMATCH.prototype.argumentsMin = 2;
+	cXMATCH.prototype.argumentsMax = 4;
+	cXMATCH.prototype.arrayIndexes = {1: 1};
+	cXMATCH.prototype.argumentsType = [argType.any, argType.reference, argType.number, argType.number];
+	cXMATCH.prototype.Calculate = function (arg) {
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3];
+		
+		// --------------------- arg0(lookup_value) type check ----------------------//
+		let lookupValue;
+		if(cElementType.number === arg0.type || 
+			cElementType.string === arg0.type || 
+			cElementType.bool === arg0.type || 
+			cElementType.cell === arg0.type ||
+			cElementType.cell3D === arg0.type) {
+			// lookupValue = new cNumber(arg0.getValue());
+			lookupValue = arg0.getValue();
+		} else {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		// --------------------- arg1(lookup_array) type check ----------------------//
+		let lookupRange;
+		if(cElementType.cellsRange === arg1.type || cElementType.array === arg1.type) {
+			lookupRange = arg1.getMatrix();
+		} else if(cElementType.cellsRange3D === arg1.type) {
+			lookupRange = arg1.getMatrix()[0];
+		} else if(cElementType.empty === arg1.type) {
+			return new cError(cErrorType.not_available);
+		} else {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		// --------------------- arg2(match_mode) type check ----------------------//
+		let matchMode;
+		if(!arg2 || cElementType.empty === arg2.type) {
+			// default value
+			matchMode = new cNumber(0);
+		} else if(cElementType.error === arg2.type) {
+			matchMode = new cNumber(0);
+		} else if(cElementType.number === arg2.type) {
+			matchMode = parseInt(arg2.toNumber());
+			if(!(matchMode >= -1 && matchMode <= 2)) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		// --------------------- arg3(search_mode) type check ----------------------//
+		let searchMode;
+		if(!arg3 || cElementType.empty === arg3.type) {
+			// default value
+			searchMode = new cNumber(1);
+		} else if(cElementType.error === arg3.type) {
+			searchMode = new cNumber(1);
+		} else if(cElementType.number === arg3.type) {
+			searchMode = parseInt(arg3.toNumber());
+			if(!(searchMode >= -2 && searchMode <= 2)) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		// --------------------- search functions block ----------------------//
+		function verticalSearch(value, array) {
+			let res = new cError(cErrorType.not_available);
+			// default search
+			for(let i = 0; i < array.length; i++) {
+				if(array[i][0].getValue() === value) {
+					res = new cNumber(++i);
+					break;
+				}
+			}
+			return res;
+		}
+
+		function horizontalSearch(value, array) {
+			let res = new cError(cErrorType.not_available);
+			// default search
+			for(let i = 0; i < array[0].length; i++) {
+				if(array[0][i].getValue() === value) {
+					res = new cNumber(++i);
+					break;
+				}
+			}
+			return res;
+		}
+		
+
+		//массив arg1 должен содержать 1 строку или 1 столбец
+		let dimensions = arg1.getDimensions();
+		let bVertical = null;
+		if(dimensions.col >= 1 && dimensions.row === 1) {
+			bVertical = false;
+		} else if(dimensions.col === 1 && dimensions.row >= 1) {
+			bVertical = true;
+		}
+
+		if (bVertical === null) {
+			return new cError(cErrorType.wrong_value_type);
+		} else {
+			let res;
+			if (bVertical) {
+				res = verticalSearch(lookupValue, lookupRange);
+			} else {
+				res = horizontalSearch(lookupValue, lookupRange);
+			}
+			return res;
+		}
 	};
 
 	var g_oVLOOKUPCache = new VHLOOKUPCache(false);
