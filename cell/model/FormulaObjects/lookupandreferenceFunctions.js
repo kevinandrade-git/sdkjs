@@ -2461,12 +2461,12 @@ function (window, undefined) {
 				bHor = true;
 			}
 
-			return this._get(oSearchRange, arg0, arg2, arg3, bHor);
+			return this._get(oSearchRange, arg0, arg2, arg3, bHor, isXMatch);
 		} else {
 			return new cError(cErrorType.not_available);
 		}
 	};
-	MatchCache.prototype._get = function (range, arg0, arg2, arg3, bHor) {
+	MatchCache.prototype._get = function (range, arg0, arg2, arg3, bHor, isXMatch) {
 		var res, _this = this, wsId = range.getWorksheet().getId(),
 			sRangeName = wsId + g_cCharDelimiter + range.getName(), cacheElem = this.cacheId[sRangeName];
 		var arg2Value = arg2.getValue();
@@ -2488,7 +2488,9 @@ function (window, undefined) {
 		}
 		var sInputKey = valueForSearching + g_cCharDelimiter + arg2Value + g_cCharDelimiter + arg3Value;
 		res = cacheElem.results[sInputKey];
-		if (!res) {
+		if(!res && isXMatch) {
+			cacheElem.results[sInputKey] = res = g_oXMatchCache._calculate(cacheElem.elements, arg0, arg2, arg3);
+		} else if (!res) {
 			cacheElem.results[sInputKey] = res = this._calculate(cacheElem.elements, arg0, arg2);
 		}
 		return res;
@@ -2542,6 +2544,107 @@ function (window, undefined) {
 
 		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);
 	};
+
+	function XMatchCache() {
+		this.cacheId = {};
+		this.cacheRanges = {};
+	}
+
+	XMatchCache.prototype = Object.create(MatchCache.prototype);
+	XMatchCache.prototype.constructor = XMatchCache;
+	XMatchCache.prototype._calculate = function(arr, a0, a2, a3) {
+		let a2Value = a2.getValue();
+		let a3value = a3.getValue();
+		let a0Type = a0.type;
+		let a0Value = a0.getValue();
+		if (!(cElementType.number === a0Type || cElementType.string === a0Type || cElementType.bool === a0Type ||
+			cElementType.error === a0Type || cElementType.empty === a0Type)) {
+			if(cElementType.empty === a0Value.type) {
+				a0Value = a0Value.tocNumber();
+			}
+			a0Type = a0Value.type;
+			a0Value = a0Value.getValue();
+		}
+
+		let item, index = -1, curIndex;
+
+		if(1 === a3value) {
+			// normal search
+			for (let i = 0; i < arr.length; ++i) {
+				item = undefined !== arr[i].v ? arr[i].v : arr[i];
+				curIndex = undefined !== arr[i].i ? arr[i].i : i;
+				if (item.type === a0Type) {
+					if (0 === a2Value || 2 === a2Value) {
+						if (cElementType.string === a0Type) {
+							if (AscCommonExcel.searchRegExp2(item.toString(), a0Value)) {
+								index = curIndex;
+								break;
+							}
+						} else {
+							if (item == a0Value) {
+								index = curIndex;
+								break;
+							}
+						}
+					} else if (-1 === a2Value) {
+						if (item <= a0Value) {
+							index = curIndex;
+						} else {
+							break;
+						}
+					} else if (1 === a2Value) {
+						if (item >= a0Value) {
+							index = curIndex;
+						} else {
+							break;
+						}
+					}
+				}
+			}
+
+		} else if(-1 === a3value) {
+			// reverse search
+			for (let i = arr.length - 1; i > 0; --i) {
+				item = undefined !== arr[i].v ? arr[i].v : arr[i];
+				curIndex = undefined !== arr[i].i ? arr[i].i : i;
+				if (item.type === a0Type) {
+					if (0 === a2Value || 2 === a2Value) {
+						if (cElementType.string === a0Type) {
+							if (AscCommonExcel.searchRegExp2(item.toString(), a0Value)) {
+								index = curIndex;
+								break;
+							}
+						} else {
+							if (item == a0Value) {
+								index = curIndex;
+								break;
+							}
+						}
+					} else if (-1 === a2Value) {
+						if (item <= a0Value) {
+							index = curIndex;
+						} else {
+							break;
+						}
+					} else if (1 === a2Value) {
+						if (item >= a0Value) {
+							index = curIndex;
+						} else {
+							break;
+						}
+					}
+				}
+			}
+
+		} else if(2 === a3value) {
+			// TODO реализовать бинарный поиск в обе стороны
+			// normal binary search
+		} else if(-2 === a3value) {
+			// reverse binary search
+		}
+
+		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);
+	}
 
 	function LOOKUPCache() {
 		this.cacheId = {};
@@ -3224,6 +3327,7 @@ function (window, undefined) {
 	var g_oHLOOKUPCache = new VHLOOKUPCache(true);
 	var g_oMatchCache = new MatchCache();
 	var g_oLOOKUPCache = new LOOKUPCache();
+	var g_oXMatchCache = new XMatchCache();
 
 //----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
