@@ -2384,8 +2384,18 @@ function (window, undefined) {
 	MatchCache.prototype = Object.create(VHLOOKUPCache.prototype);
 	MatchCache.prototype.constructor = MatchCache;
 	MatchCache.prototype.calculate = function (arg, _arg1) {
+		var arg0 = arg[0], arg1 = arg[1], arg2, arg3;
+		var isXMatch = arg[4];
 
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(1);
+		if(isXMatch) {
+			// default values for XMatch
+			arg2 = arg[2] ? arg[2] : new cNumber(0);
+			arg3 = arg[3] ? arg[3] : new cNumber(1);
+		} else {
+			// default values for Match
+			arg2 = arg[2] ? arg[2] : new cNumber(1);
+			arg3 = new cNumber(1);
+		}
 
 		if (cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg0.type) {
 			arg0 = arg0.cross(_arg1);
@@ -2403,8 +2413,16 @@ function (window, undefined) {
 		}
 
 		var a2Value = arg2.getValue();
-		if (!(-1 === a2Value || 0 === a2Value || 1 === a2Value)) {
+		if(a2Value === 2) {
+			// wildcard match
+		}
+		if (!(-1 === a2Value || 0 === a2Value || 1 === a2Value || 2 === a2Value)) {
 			return new cError(cErrorType.not_numeric);
+		}
+
+		var a3value = arg3.getValue();
+		if(!(-2 === a3value || -1 === a3value || 1 === a3value || 2 === a3value)) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		if(cElementType.error === arg1.type) {
@@ -2429,12 +2447,11 @@ function (window, undefined) {
 
 		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
 			cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			// add range.isonecell
 			var oSearchRange = arg1.getRange();
-
 			if (!oSearchRange) {
 				return new cError(cErrorType.bad_reference);
 			}
-
 
 			var a1RowCount = oSearchRange.bbox.r2 - oSearchRange.bbox.r1 + 1, a1ColumnCount = oSearchRange.bbox.c2 - oSearchRange.bbox.c1 + 1;
 			var bHor = false;
@@ -2444,15 +2461,16 @@ function (window, undefined) {
 				bHor = true;
 			}
 
-			return this._get(oSearchRange, arg0, arg2, bHor);
+			return this._get(oSearchRange, arg0, arg2, arg3, bHor);
 		} else {
 			return new cError(cErrorType.not_available);
 		}
 	};
-	MatchCache.prototype._get = function (range, arg0, arg2, bHor) {
+	MatchCache.prototype._get = function (range, arg0, arg2, arg3, bHor) {
 		var res, _this = this, wsId = range.getWorksheet().getId(),
 			sRangeName = wsId + g_cCharDelimiter + range.getName(), cacheElem = this.cacheId[sRangeName];
 		var arg2Value = arg2.getValue();
+		var arg3Value = arg3.getValue();
 		var valueForSearching = arg0.getValue();
 		if (!cacheElem) {
 			cacheElem = {elements: [], results: {}};
@@ -2468,7 +2486,7 @@ function (window, undefined) {
 			}
 			cacheRange.add(range.getBBox0(), cacheElem);
 		}
-		var sInputKey = valueForSearching + g_cCharDelimiter + arg2Value;
+		var sInputKey = valueForSearching + g_cCharDelimiter + arg2Value + g_cCharDelimiter + arg3Value;
 		res = cacheElem.results[sInputKey];
 		if (!res) {
 			cacheElem.results[sInputKey] = res = this._calculate(cacheElem.elements, arg0, arg2);
@@ -3198,107 +3216,8 @@ function (window, undefined) {
 	cXMATCH.prototype.arrayIndexes = {1: 1};
 	cXMATCH.prototype.argumentsType = [argType.any, argType.reference, argType.number, argType.number];
 	cXMATCH.prototype.Calculate = function (arg) {
-		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3];
-		
-		// --------------------- arg0(lookup_value) type check ----------------------//
-		let lookupValue;
-		if(cElementType.number === arg0.type || 
-			cElementType.string === arg0.type || 
-			cElementType.bool === arg0.type || 
-			cElementType.cell === arg0.type ||
-			cElementType.cell3D === arg0.type) {
-			// lookupValue = new cNumber(arg0.getValue());
-			lookupValue = arg0.getValue();
-		} else {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		// --------------------- arg1(lookup_array) type check ----------------------//
-		let lookupRange;
-		if(cElementType.cellsRange === arg1.type || cElementType.array === arg1.type) {
-			lookupRange = arg1.getMatrix();
-		} else if(cElementType.cellsRange3D === arg1.type) {
-			lookupRange = arg1.getMatrix()[0];
-		} else if(cElementType.empty === arg1.type) {
-			return new cError(cErrorType.not_available);
-		} else {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		// --------------------- arg2(match_mode) type check ----------------------//
-		let matchMode;
-		if(!arg2 || cElementType.empty === arg2.type) {
-			// default value
-			matchMode = new cNumber(0);
-		} else if(cElementType.error === arg2.type) {
-			matchMode = new cNumber(0);
-		} else if(cElementType.number === arg2.type) {
-			matchMode = parseInt(arg2.toNumber());
-			if(!(matchMode >= -1 && matchMode <= 2)) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-		}
-
-		// --------------------- arg3(search_mode) type check ----------------------//
-		let searchMode;
-		if(!arg3 || cElementType.empty === arg3.type) {
-			// default value
-			searchMode = new cNumber(1);
-		} else if(cElementType.error === arg3.type) {
-			searchMode = new cNumber(1);
-		} else if(cElementType.number === arg3.type) {
-			searchMode = parseInt(arg3.toNumber());
-			if(!(searchMode >= -2 && searchMode <= 2)) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-		}
-
-		// --------------------- search functions block ----------------------//
-		function verticalSearch(value, array) {
-			let res = new cError(cErrorType.not_available);
-			// default search
-			for(let i = 0; i < array.length; i++) {
-				if(array[i][0].getValue() === value) {
-					res = new cNumber(++i);
-					break;
-				}
-			}
-			return res;
-		}
-
-		function horizontalSearch(value, array) {
-			let res = new cError(cErrorType.not_available);
-			// default search
-			for(let i = 0; i < array[0].length; i++) {
-				if(array[0][i].getValue() === value) {
-					res = new cNumber(++i);
-					break;
-				}
-			}
-			return res;
-		}
-		
-
-		//массив arg1 должен содержать 1 строку или 1 столбец
-		let dimensions = arg1.getDimensions();
-		let bVertical = null;
-		if(dimensions.col >= 1 && dimensions.row === 1) {
-			bVertical = false;
-		} else if(dimensions.col === 1 && dimensions.row >= 1) {
-			bVertical = true;
-		}
-
-		if (bVertical === null) {
-			return new cError(cErrorType.wrong_value_type);
-		} else {
-			let res;
-			if (bVertical) {
-				res = verticalSearch(lookupValue, lookupRange);
-			} else {
-				res = horizontalSearch(lookupValue, lookupRange);
-			}
-			return res;
-		}
+		arg[4] = true;
+		return g_oMatchCache.calculate(arg, arguments[1]);
 	};
 
 	var g_oVLOOKUPCache = new VHLOOKUPCache(false);
